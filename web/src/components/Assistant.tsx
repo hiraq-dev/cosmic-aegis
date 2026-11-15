@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, Send, X } from "lucide-react";
+import { Bot, Send, Square, Volume2, VolumeX, X } from "lucide-react";
+import { speakLines, speechSupported, stopSpeech } from "../lib/speech";
 import { useStore } from "../lib/store";
 import { START_CHIPS, reply, type BotReply } from "../lib/assistant";
 
@@ -9,6 +10,7 @@ interface Msg {
   text: string;
   go?: BotReply["go"];
   chips?: string[];
+  speak?: string[];
 }
 
 export default function Assistant() {
@@ -20,6 +22,17 @@ export default function Assistant() {
     { from: "bot", text: `Hi ${data.profile.name.split(" ")[0] || "there"}, I am the AEGIS assistant. I explain your own logged demo data. I am a scripted helper, not an AI model or a doctor.`, chips: START_CHIPS },
   ]);
   const end = useRef<HTMLDivElement>(null);
+  const [voice, setVoice] = useState(false);
+  const [talking, setTalking] = useState(false);
+  const say = (lines: string[]) => {
+    setTalking(true);
+    speakLines(lines, undefined, () => setTalking(false));
+  };
+  const hush = () => {
+    stopSpeech();
+    setTalking(false);
+  };
+  useEffect(() => () => stopSpeech(), []);
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: "end" });
@@ -30,6 +43,8 @@ export default function Assistant() {
     if (!text) return;
     const r = reply(text, data);
     setMsgs((m) => [...m, { from: "me", text }, { from: "bot", ...r }]);
+    if (r.speak) say(r.speak);
+    else if (voice) say([r.text]);
     setInput("");
   };
 
@@ -53,9 +68,19 @@ export default function Assistant() {
           </h2>
           <p className="text-[11px] text-slate-400">Scripted demo helper. Not AI, not medical advice.</p>
         </div>
-        <button onClick={() => setOpen(false)} aria-label="Close assistant" className="rounded p-1 text-slate-300 hover:bg-white/10">
+        <div className="flex items-center gap-1">
+          {speechSupported && (
+            <button onClick={() => { if (voice) hush(); setVoice((v) => !v); }} aria-pressed={voice} aria-label={voice ? "Turn voice replies off" : "Turn voice replies on"} title="Read replies aloud" className={`rounded p-1.5 hover:bg-white/10 ${voice ? "text-aegis-cyan" : "text-slate-400"}`}>
+              {voice ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            </button>
+          )}
+          {talking && (
+            <button onClick={hush} aria-label="Stop speaking" className="rounded p-1.5 text-hud-crimson hover:bg-white/10"><Square size={16} /></button>
+          )}
+        <button onClick={() => { hush(); setOpen(false); }} aria-label="Close assistant" className="rounded p-1 text-slate-300 hover:bg-white/10">
           <X size={18} />
         </button>
+        </div>
       </header>
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-3" aria-live="polite">
         {msgs.map((m, i) => (

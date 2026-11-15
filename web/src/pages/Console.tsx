@@ -7,6 +7,8 @@ import { Mod01 } from "./Companion";
 import { useStore } from "../lib/store";
 import { mentalSummary, missionStatus, overall, wellbeingScore, MOOD_LABEL } from "../lib/assess";
 import { shortDate, today } from "../lib/dates";
+import { buildGuidance } from "../lib/assistant";
+import { speakLines, speechSupported, stopSpeech } from "../lib/speech";
 
 type View = "hab" | "ground" | "checklist";
 type Toast = { id: number; text: string; kind: "info" | "success" | "alert" };
@@ -642,6 +644,45 @@ function Checklist({ go }: { go: (v: View, id?: string) => void }) {
   );
 }
 
+// ---------- voice guidance ----------
+function VoiceGuide() {
+  const { data } = useStore();
+  const g = useMemo(() => buildGuidance(data), [data]);
+  const lines = useMemo(() => [g.headline, ...g.steps], [g]);
+  const [cur, setCur] = useState<number | null>(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => () => stopSpeech(), []);
+  const play = () => {
+    setPlaying(true);
+    speakLines(lines, (i) => setCur(i), () => { setPlaying(false); setCur(null); });
+  };
+  const stop = () => { stopSpeech(); setPlaying(false); setCur(null); };
+  return (
+    <Panel title="Voice guidance for you" icon={<Volume2 size={16} />} action={<Pill tone="cyan">FROM YOUR DATA</Pill>} className="border-t-2 !border-t-aegis-cyan">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+        <div className="lg:w-64 lg:shrink-0">
+          <p className="mb-3 text-[14px] text-slate-300">A spoken walk-through of what to do next, built from your own entries. It updates when your data changes.</p>
+          {speechSupported ? (
+            playing ? (
+              <button className={`${btnPrime} !from-red-900 !to-hud-crimson !border-red-300`} onClick={stop}><VolumeX size={15} /> STOP VOICE</button>
+            ) : (
+              <button className={btnPrime} onClick={play}><Volume2 size={15} /> PLAY VOICE GUIDANCE</button>
+            )
+          ) : (
+            <p className="rounded-md border border-amber-400/40 bg-amber-400/10 p-2 text-xs text-hud-amber">This browser has no speech voice. Read the guidance on the right instead.</p>
+          )}
+          <p className="mt-2 text-[11px] text-slate-400">Uses your device's built-in voice. Nothing is recorded or uploaded. General wellness pointers only, not medical advice.</p>
+        </div>
+        <ol className="flex-1 space-y-2" aria-label="Guidance transcript">
+          {lines.map((l, i) => (
+            <li key={i} className={`rounded-lg border px-3.5 py-2.5 text-[14.5px] leading-snug transition ${cur === i ? "border-aegis-cyan bg-cyan-400/15 text-white shadow-[0_0_14px_rgba(0,240,255,.25)]" : "border-white/10 bg-[rgba(9,16,34,.6)] text-slate-300"}`}>{l}</li>
+          ))}
+        </ol>
+      </div>
+    </Panel>
+  );
+}
+
 // ---------- page ----------
 export default function Console() {
   const [params, setParams] = useSearchParams();
@@ -707,6 +748,7 @@ export default function Console() {
           <button onClick={() => setSos(true)} className="rounded-lg border border-red-400 bg-red-500/15 px-4 py-2 text-sm font-bold text-red-100 hover:bg-red-500/30">SOS practice</button>
         </div>
       </section>
+      <VoiceGuide />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div role="tablist" aria-label="Console views" className="flex flex-wrap gap-2">
           {tabs.map(([v, l, ic]) => (
