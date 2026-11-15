@@ -1,15 +1,15 @@
-# Submission form answers (website prototypes)
+# Submission form answers (C.O.S.M.I.C. AEGIS website)
 
 Challenge: **Create Health Monitoring Software for Astronauts on Space Missions**
 https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/
 
-Team: Team AEGIS (Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar Mani Kandan). Use your registered Space Apps team name if it differs. Check the official Space Apps site for current field names, limits and the deadline. Both texts below say plainly that all data is simulated, so do not edit that out.
+Team: Team AEGIS (Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar Mani Kandan). Use your registered Space Apps team name if it differs. Check the official Space Apps site for current field names, limits and the deadline. The text below says plainly that all data is simulated, so do not edit that out.
 
-A team normally submits **one project**. AEGIS is the stronger primary entry (three focused modules, a 7-slide deck, sources page). ASTRA CARE is a second, broader prototype; submit it only if the rules allow a second entry, or mention it as a related demo in the AEGIS details.
+Only C.O.S.M.I.C. AEGIS is deployed and submitted. The `astra-care/` folder in the repository is an unused side prototype and is not published.
 
 ---
 
-## A. C.O.S.M.I.C. AEGIS (recommended primary entry)
+## C.O.S.M.I.C. AEGIS
 
 **Project name:** C.O.S.M.I.C. AEGIS - Understand Your Health Beyond Earth
 
@@ -41,35 +41,6 @@ The website's code, text and illustrations were created with AI assistance (Clau
 - Canadian Space Agency, "Why Do We Conduct Science Experiments in Space?": https://www.asc-csa.gc.ca/eng/iss/science/why-do-we-conduct-science-experiments-in-space.asp
 - Open-source libraries: React, Vite, Tailwind CSS, Recharts, Lucide icons.
 - No agency partnership, endorsement or data licence exists. Say "none" if the form asks for a formal partner.
-
----
-
-## B. ASTRA CARE (optional second entry)
-
-**Project name:** ASTRA CARE - Deep Space Wellbeing Prototype
-
-**Project summary (50-200 words):**
-ASTRA CARE is an interactive website prototype for the wellbeing of astronauts on long missions. It combines ten demo modules: an animated astronaut companion, a daily mental-wellbeing check-in, light-hearted morale questions, a sleep and fatigue dashboard with a reaction-time game, a 7-day sleep trend chart, a pattern-detection panel, simple countermeasure tools (breathing pacer, light and sound), an emergency screen simulation, an offline transmission queue that simulates communication delays, and a simulated ground-team console. It is built to show how a crew-facing tool could stay useful when contact with Earth is delayed. All crew, readings and alerts are fictional, no machine-learning model runs, and nothing is ever sent anywhere. It is a design prototype, not a medical device.
-
-(About 120 words.)
-
-**Link to demo (public, no login):** https://astra-care-seven.vercel.app
-
-**Link to project (code):** https://github.com/hiraq-dev/cosmic-aegis (folder `astra-care`)
-
-**Project details:**
-A static site (HTML, CSS, JavaScript, no build step) with a Build Checklist view showing 10 of 10 prototype modules implemented, a simulated ground console and a Space Apps Requirements tab with an interactive submission checklist. Sound effects and the binaural tone use the browser's Web Audio API. The pattern-detection panel, voice analysis, "links" and ECG waveform are scripted or synthetic and are labelled that way on the page. A banner on every page says the data is fictional.
-
-**Use of Artificial Intelligence (SI) disclosure:**
-The website's code, text and graphics were created with AI assistance (Claude by Anthropic) and edited by the team. The astronaut avatar is original vector artwork with no NASA or other agency logos. No AI model analyses health data; all values are simulated. This is stated on the site and in the repository README.
-
-**NASA data and resources used (full URLs):** background reading only; no dataset or API is connected.
-- https://www.nasa.gov/hrp/hazards/
-- https://www.nasa.gov/hrp/risks/
-- https://www.nasa.gov/hrp/ongoing-hrp-research/
-- https://ntrs.nasa.gov/api/citations/20170004604/downloads/20170004604.pdf
-
-**Space agency partner and other data/resources:** none (no partnership or endorsement). Only open web technologies and Google Fonts (Orbitron, Rajdhani, Space Mono).
 
 ---
 
