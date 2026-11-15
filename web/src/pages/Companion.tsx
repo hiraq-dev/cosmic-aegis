@@ -93,7 +93,7 @@ function Astro({ mood, float, wave }: { mood: Mood; float: boolean; wave: boolea
   );
 }
 
-function Mod01({ ms, setZenExt }: { ms: ReturnType<typeof mentalSummary>; setZenExt: (z: boolean) => void }) {
+export function Mod01({ ms, setZenExt }: { ms: ReturnType<typeof mentalSummary>; setZenExt: (z: boolean) => void }) {
   const auto: Mood = ms.stressAlert ? "alert" : ms.score >= 65 ? "happy" : "analyze";
   const [pick, setPick] = useState<Mood | null>(null);
   const [text, setText] = useState(SPEECH[auto][0]);

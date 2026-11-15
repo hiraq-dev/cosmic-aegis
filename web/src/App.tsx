@@ -5,9 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import Mental from "./pages/Mental";
 import Musculoskeletal from "./pages/Musculoskeletal";
 import Cardiovascular from "./pages/Cardiovascular";
-import Companion from "./pages/Companion";
-import Comms from "./pages/Comms";
-import Checklist from "./pages/Checklist";
+import Console from "./pages/Console";
 import Profile from "./pages/Profile";
 import Sources from "./pages/Sources";
 import { StoreProvider } from "./lib/store";
@@ -31,13 +29,11 @@ export default function App() {
         <ScrollTop />
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<Console />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="mental" element={<Mental />} />
             <Route path="musculoskeletal" element={<Musculoskeletal />} />
             <Route path="cardiovascular" element={<Cardiovascular />} />
-            <Route path="companion" element={<Companion />} />
-            <Route path="comms" element={<Comms />} />
-            <Route path="checklist" element={<Checklist />} />
             <Route path="profile" element={<Profile />} />
             <Route path="sources" element={<Sources />} />
             <Route path="*" element={<Navigate to="/" replace />} />

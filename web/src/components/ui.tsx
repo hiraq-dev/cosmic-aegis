@@ -4,18 +4,15 @@ import type { Status } from "../lib/types";
 import { STATUS_LABEL } from "../lib/assess";
 
 export function Logo({ size = 36 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" role="img" aria-label="C.O.S.M.I.C. AEGIS logo">
-      <path d="M32 6 13 14v16c0 13 8 21 19 27 11-6 19-14 19-27V14z" fill="rgba(34,211,238,0.08)" stroke="#22d3ee" strokeWidth="3" />
-      <ellipse cx="32" cy="32" rx="20" ry="7.5" fill="none" stroke="#8b5cf6" strokeWidth="2.5" transform="rotate(-25 32 32)" />
-      <circle cx="32" cy="32" r="4.5" fill="#22d3ee" />
-    </svg>
-  );
+  return <img src="/logo.png" width={size} height={size} alt="C.O.S.M.I.C. AEGIS logo" className="rounded-full shadow-[0_0_14px_rgba(0,240,255,.35)]" />;
 }
 
 export function Panel({ title, icon, action, children, className = "", mod }: { title?: string; icon?: ReactNode; action?: ReactNode; children: ReactNode; className?: string; mod?: string }) {
+  const ACC = ["#00f0ff", "#00ff9d", "#a78bfa", "#ffb020", "#ff6b8b", "#38bdf8"];
+  const n = mod ? parseInt(mod.replace(/\D/g, ""), 10) || 0 : 0;
+  const accent = ACC[n % ACC.length];
   return (
-    <section className={`glass p-5 ${className}`}>
+    <section className={`glass p-5 ${className}`} style={mod ? { borderTop: `2px solid ${accent}`, boxShadow: `0 8px 32px rgba(0,0,0,.65), 0 -6px 24px -12px ${accent}` } : undefined}>
       {(title || action) && (
         <header className="mb-4 flex items-center justify-between gap-3 border-b border-white/10 pb-3">
           <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-white">
