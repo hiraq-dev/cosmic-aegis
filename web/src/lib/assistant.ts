@@ -81,7 +81,7 @@ export function reply(raw: string, data: AppData): BotReply {
     return {
       text:
         "This sounds serious, and I am only a scripted demo, so I cannot help with it. Please contact your crew medical officer or mission emergency channel right now, or alert a crew-mate next to you. On Earth, call your local emergency number. You do not have to handle this alone.",
-      go: { to: "/comms", label: "Open the simulated SOS screen" },
+      go: { to: "/console?view=ground", label: "Open the simulated SOS screen" },
     };
 
   if (has(q, "guidance", "what should i do", "what do i do", "voice", "read aloud", "speak", "advice", "next step")) {
@@ -116,7 +116,7 @@ export function reply(raw: string, data: AppData): BotReply {
     const recs = mentalRecommendations(m).join(" ");
     return {
       text: `Your latest check-in: mood ${MOOD_LABEL[m.mood]}, stress ${m.stress}/5, sleep ${m.sleepHours} h, fatigue ${m.fatigue}/5. ${o.mental.stressAlert ? `${o.mental.highStress} of your last 5 check-ins reported high stress, so consider talking to your crew medical officer. ` : ""}${recs}`,
-      go: { to: "/companion", label: "Try a breathing break" },
+      go: { to: "/console", label: "Try a breathing break" },
       chips: ["I need a breathing break", "Help me sleep"],
     };
   }
@@ -125,11 +125,11 @@ export function reply(raw: string, data: AppData): BotReply {
     const s = o.mental;
     return {
       text: `Your 7-entry average sleep is ${s.avgSleep.toFixed(1)} h and average fatigue ${s.avgFatigue.toFixed(1)}/5. ${s.avgSleep < 6.5 ? "That is below the illustrative 6.5 h line. Dim lights before your sleep period, keep a regular schedule, and avoid hard exercise just before sleep." : "That looks steady. Keep a regular sleep schedule."} The Companion page has a reaction-time test you can use as a rough alertness check (not a medical test).`,
-      go: { to: "/companion", label: "Open Companion" },
+      go: { to: "/console", label: "Open Companion" },
     };
   }
 
-  if (has(q, "breath", "calm", "relax", "panic", "break")) return { text: "Let us slow down together. Open the breathing pacer: breathe in for 4, hold for 7, out for 8. Repeat 4 rounds.", go: { to: "/companion", label: "Start breathing pacer" } };
+  if (has(q, "breath", "calm", "relax", "panic", "break")) return { text: "Let us slow down together. Open the breathing pacer: breathe in for 4, hold for 7, out for 8. Repeat 4 rounds.", go: { to: "/console", label: "Start breathing pacer" } };
 
   if (has(q, "heart", "blood pressure", "pressure", "oxygen", "spo2", "pulse", "vital", "cardio")) {
     const c = o.cardio;
@@ -151,7 +151,7 @@ export function reply(raw: string, data: AppData): BotReply {
 
   if (has(q, "mission", "day", "delay", "distance", "earth")) {
     const ms = missionStatus(data);
-    return { text: `Simulated mission: day ${ms.day} of ${ms.len} (${ms.progress}%). Simulated distance ${ms.distanceMkm} million km, one-way signal delay about ${ms.oneWayMin} minutes. These are demo values.`, go: { to: "/comms", label: "Try the delay-tolerant queue" } };
+    return { text: `Simulated mission: day ${ms.day} of ${ms.len} (${ms.progress}%). Simulated distance ${ms.distanceMkm} million km, one-way signal delay about ${ms.oneWayMin} minutes. These are demo values.`, go: { to: "/console?view=ground", label: "Try the delay-tolerant queue" } };
   }
 
   if (has(q, "simulat", "real", "fake", "nasa", "data", "medical", "diagnos", "ai ")) {

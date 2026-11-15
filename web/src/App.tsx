@@ -29,8 +29,8 @@ export default function App() {
         <ScrollTop />
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Console />} />
-            <Route path="dashboard" element={<Dashboard />} />
+            <Route index element={<Dashboard />} />
+            <Route path="console" element={<Console />} />
             <Route path="mental" element={<Mental />} />
             <Route path="musculoskeletal" element={<Musculoskeletal />} />
             <Route path="cardiovascular" element={<Cardiovascular />} />

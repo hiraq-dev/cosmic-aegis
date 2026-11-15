@@ -4,6 +4,7 @@ import { useStore } from "../lib/store";
 import { buildAlerts, missionStatus, overall, simulatedEnvironment, STATUS_LABEL } from "../lib/assess";
 import { moodRows, recentActivity, vitalRows, exerciseRows } from "../lib/chartData";
 import { today } from "../lib/dates";
+import Story from "../components/Story";
 import { AstronautArt } from "../components/AstronautArt";
 import { AlertsList } from "../components/AlertsList";
 import { MoodCheckIn } from "../components/forms";
@@ -88,6 +89,8 @@ export default function Dashboard() {
           <AstronautArt className="mx-auto w-full max-w-sm" />
         </div>
       </section>
+
+      <Story />
 
       {/* Profile, mission, overall */}
       <div className="grid gap-4 lg:grid-cols-3">

@@ -10,8 +10,8 @@ import { today } from "../lib/dates";
 import { REPO_URL, TEAM_MEMBERS, TEAM_NAME } from "../lib/team";
 
 const NAV = [
-  { to: "/", label: "Habitat console", icon: Smile, end: true, color: "#00f0ff" },
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "#38bdf8" },
+  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true, color: "#38bdf8" },
+  { to: "/console", label: "Habitat console", icon: Smile, color: "#00f0ff" },
   { to: "/mental", label: "Mental", icon: Brain, color: "#a78bfa" },
   { to: "/musculoskeletal", label: "Muscle & bone", icon: Dumbbell, color: "#ffb020" },
   { to: "/cardiovascular", label: "Cardio", icon: HeartPulse, color: "#ff6b8b" },
@@ -106,7 +106,7 @@ export default function Layout() {
               <span>SIM DAY <strong>{ms.day}</strong></span>
               <Clock />
             </div>
-            <Link to="/?sos=1" className="font-display inline-flex items-center gap-1.5 rounded-md border border-red-400 bg-gradient-to-br from-red-900 to-hud-crimson px-3 py-1.5 text-[11px] font-bold tracking-wider text-white shadow-[0_0_12px_rgba(255,42,85,.4)] hover:shadow-[0_0_20px_rgba(255,42,85,.8)]">
+            <Link to="/console?sos=1" className="font-display inline-flex items-center gap-1.5 rounded-md border border-red-400 bg-gradient-to-br from-red-900 to-hud-crimson px-3 py-1.5 text-[11px] font-bold tracking-wider text-white shadow-[0_0_12px_rgba(255,42,85,.4)] hover:shadow-[0_0_20px_rgba(255,42,85,.8)]">
               <TriangleAlert size={14} aria-hidden="true" /> <span className="hidden sm:inline">SOS PRACTICE</span><span className="sm:hidden">SOS</span>
             </Link>
             <button className="rounded-lg border border-white/15 p-2 text-slate-200 hover:bg-white/10 xl:hidden" aria-expanded={open} aria-controls="mobile-nav" aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((o) => !o)}>
