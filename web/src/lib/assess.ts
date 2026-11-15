@@ -200,7 +200,7 @@ export function buildAlerts(data: AppData): Alert[] {
     level: "nominal",
     module: "system",
     title: "Sample notification: radiation dose within demo range",
-    detail: "Simulated sensor value. No real radiation instrument is connected.",
+    detail: "Simulated sensor value. For real space-weather events, see the live NASA DONKI panel on the dashboard.",
     simulated: true,
   });
   return alerts.sort((a, b) => ["review", "watch", "nominal"].indexOf(a.level) - ["review", "watch", "nominal"].indexOf(b.level));

@@ -20,7 +20,7 @@ export default function Sources() {
 
       <Panel title="NASA and CSA resources referenced">
         <p className="mb-4 text-sm text-slate-300">
-          These public resources shaped the topics, indicators and explanations. <strong>No NASA or CSA dataset, API or live feed is connected.</strong> Every number you see in the dashboard is demo data. NASA and CSA do not endorse this project, and this
+          These public resources shaped the topics, indicators and explanations. <strong>One live NASA feed is connected: DONKI space weather</strong>, shown in the "Live NASA space weather" panel on the dashboard. Every other number (vitals, check-ins, cabin readings) is demo data. NASA and CSA do not endorse this project, and this
           prototype is not affiliated with them.
         </p>
         <ul className="space-y-4">

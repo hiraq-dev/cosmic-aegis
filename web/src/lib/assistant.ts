@@ -156,7 +156,7 @@ export function reply(raw: string, data: AppData): BotReply {
 
   if (has(q, "simulat", "real", "fake", "nasa", "data", "medical", "diagnos", "ai ")) {
     return {
-      text: "Everything is simulated demo data stored only in your browser. AEGIS is not a medical device, is not affiliated with or endorsed by NASA, and uses no real NASA dataset. I am a scripted helper, not an AI model. The Sources page has a full real-versus-simulated table.",
+      text: "Your health entries are simulated demo data stored only in your browser. The one live part is the NASA DONKI space-weather panel on the dashboard. AEGIS is not a medical device and is not affiliated with or endorsed by NASA. I am a scripted helper, not an AI model. The Sources page has a full real-versus-simulated table.",
       go: { to: "/sources", label: "Sources & status" },
     };
   }

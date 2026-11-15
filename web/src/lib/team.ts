@@ -11,8 +11,14 @@ export interface SourceItem {
   usedFor: string;
 }
 
-// Only resources that this prototype actually draws on. No datasets or APIs are connected.
+// Resources this prototype draws on. One live NASA API is connected: DONKI space weather (first item).
 export const SOURCES: SourceItem[] = [
+  {
+    name: "NASA DONKI Space Weather Database via NASA Open APIs (LIVE)",
+    url: "https://api.nasa.gov/",
+    org: "NASA",
+    usedFor: "LIVE data on the dashboard: geomagnetic storms, solar energetic particle events, radiation belt enhancements and CMEs from the last 30 days, shown as radiation awareness.",
+  },
   {
     name: "5 Hazards of Human Spaceflight (NASA Human Research Program)",
     url: "https://www.nasa.gov/hrp/hazards/",

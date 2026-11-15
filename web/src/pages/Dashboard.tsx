@@ -5,6 +5,7 @@ import { buildAlerts, missionStatus, overall, simulatedEnvironment, STATUS_LABEL
 import { moodRows, recentActivity, vitalRows, exerciseRows } from "../lib/chartData";
 import { today } from "../lib/dates";
 import Story from "../components/Story";
+import SpaceWeather from "../components/SpaceWeather";
 import { AstronautArt } from "../components/AstronautArt";
 import { AlertsList } from "../components/AlertsList";
 import { MoodCheckIn } from "../components/forms";
@@ -214,6 +215,8 @@ export default function Dashboard() {
         </Panel>
       </div>
 
+      <SpaceWeather />
+
       <Panel title="Built from NASA Human Research Program resources" icon={<Atom size={16} aria-hidden="true" />} action={<DemoBadge text="NASA HRP" />}>
         <p className="mb-3 text-sm text-slate-300">
           AEGIS is organised around the five hazards of human spaceflight that NASA's Human Research Program describes. Each hazard maps to a feature you can try on this site.
@@ -228,7 +231,7 @@ export default function Dashboard() {
           ))}
         </div>
         <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs">
-          {SOURCES.slice(0, 3).map((s) => (
+          {SOURCES.slice(1, 4).map((s) => (
             <li key={s.url}>
               <a className="text-aegis-cyan underline hover:text-white" href={s.url} target="_blank" rel="noreferrer">{s.name.replace(" (NASA Human Research Program)", "").replace(" (NASA)", "")}</a>
             </li>
