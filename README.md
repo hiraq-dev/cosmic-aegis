@@ -1,7 +1,9 @@
 # C.O.S.M.I.C. AEGIS
 
-> **New: website prototype in [`web/`](web/README.md)** - "Understand Your Health Beyond Earth": a frontend-only
-> demo with Mental Health, Musculoskeletal and Cardiovascular modules (demo data, not a medical device).
+> **Team AEGIS website prototype in [`web/`](web/README.md)** - live at https://cosmic-aegis-beryl.vercel.app.
+> "Understand Your Health Beyond Earth": a dashboard with a 30-second narrated story, mental health, muscle and bone
+> and cardiovascular modules, a ten-module habitat console, SOS practice, a voice-guided assistant, and a live NASA
+> DONKI space-weather panel (health entries are demo data, not a medical device).
 > Run: `cd web && npm install && npm run dev`. The text below describes the earlier Python edge-AI backend prototype.
 
 **Cottbus Orbital Software for Medical Informatics & Care - Aerospace Edge-Guardian for Informatics & Security**
