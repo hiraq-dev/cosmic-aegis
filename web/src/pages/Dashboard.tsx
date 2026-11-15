@@ -5,7 +5,7 @@ import { buildAlerts, missionStatus, overall, simulatedEnvironment, STATUS_LABEL
 import { moodRows, recentActivity, vitalRows, exerciseRows } from "../lib/chartData";
 import { today } from "../lib/dates";
 import Story from "../components/Story";
-import SpaceWeather from "../components/SpaceWeather";
+import NasaContext from "../components/NasaContext";
 import RiskEngine from "../components/RiskEngine";
 import ScanSession from "../components/ScanSession";
 import { AlertsList } from "../components/AlertsList";
@@ -221,7 +221,7 @@ export default function Dashboard() {
 
       <RiskEngine />
 
-      <SpaceWeather />
+      <NasaContext />
 
       <Panel title="Built from NASA Human Research Program resources" icon={<Atom size={16} aria-hidden="true" />} action={<DemoBadge text="NASA HRP" />}>
         <p className="mb-3 text-sm text-slate-300">
