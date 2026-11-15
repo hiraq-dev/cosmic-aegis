@@ -7,15 +7,20 @@ import Musculoskeletal from "./pages/Musculoskeletal";
 import Cardiovascular from "./pages/Cardiovascular";
 import Companion from "./pages/Companion";
 import Comms from "./pages/Comms";
+import Checklist from "./pages/Checklist";
 import Profile from "./pages/Profile";
 import Sources from "./pages/Sources";
 import { StoreProvider } from "./lib/store";
 
 function ScrollTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useEffect(() => {
+    if (hash) {
+      setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView(), 50);
+      return;
+    }
     window.scrollTo(0, 0); // braces matter: an effect must not return the call's result
-  }, [pathname]);
+  }, [pathname, hash]);
   return null;
 }
 
@@ -32,6 +37,7 @@ export default function App() {
             <Route path="cardiovascular" element={<Cardiovascular />} />
             <Route path="companion" element={<Companion />} />
             <Route path="comms" element={<Comms />} />
+            <Route path="checklist" element={<Checklist />} />
             <Route path="profile" element={<Profile />} />
             <Route path="sources" element={<Sources />} />
             <Route path="*" element={<Navigate to="/" replace />} />

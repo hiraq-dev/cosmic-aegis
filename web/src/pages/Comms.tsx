@@ -118,9 +118,9 @@ export default function Comms() {
         <p className="text-sm text-slate-300">Simulated delay-tolerant queue, mock ground view and a practice alert screen. <DemoBadge text="SIMULATED" /></p>
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
-        <Panel title="Delay-tolerant queue" icon={<Radio size={16} />}><Queue /></Panel>
-        <Panel title="Mock ground view" icon={<Radio size={16} />}><Ground /></Panel>
-        <Panel title="Practice SOS" icon={<Siren size={16} />} className="lg:col-span-2"><Sos /></Panel>
+        <Panel mod="MOD-09" title="Delay-tolerant queue" icon={<Radio size={16} />}><Queue /></Panel>
+        <Panel mod="MOD-10" title="Mock ground console" icon={<Radio size={16} />}><Ground /></Panel>
+        <div id="sos" className="scroll-mt-40 lg:col-span-2"><Panel mod="MOD-08" title="Practice SOS" icon={<Siren size={16} />}><Sos /></Panel></div>
       </div>
       <Disclaimer />
     </div>

@@ -13,13 +13,14 @@ export function Logo({ size = 36 }: { size?: number }) {
   );
 }
 
-export function Panel({ title, icon, action, children, className = "" }: { title?: string; icon?: ReactNode; action?: ReactNode; children: ReactNode; className?: string }) {
+export function Panel({ title, icon, action, children, className = "", mod }: { title?: string; icon?: ReactNode; action?: ReactNode; children: ReactNode; className?: string; mod?: string }) {
   return (
     <section className={`glass p-5 ${className}`}>
       {(title || action) && (
-        <header className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-aegis-cyan">
-            {icon}
+        <header className="mb-4 flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-white">
+            {mod && <span className="mod-id">{mod}</span>}
+            <span className="text-aegis-cyan">{icon}</span>
             {title}
           </h2>
           {action}
