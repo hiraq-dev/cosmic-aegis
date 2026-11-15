@@ -131,7 +131,7 @@ export default function Workspace() {
 
   useEffect(() => {
     const load = () => api("/context/nasa").then(setNasa).catch(() => setNasa({}));
-    load(); const t = setInterval(load, 60000); return () => clearInterval(t);
+    load(); const t = setInterval(load, LOCAL_MODE ? 5000 : 60000); return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
