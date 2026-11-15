@@ -6,6 +6,8 @@ import Mental from "./pages/Mental";
 import Musculoskeletal from "./pages/Musculoskeletal";
 import Cardiovascular from "./pages/Cardiovascular";
 import Console from "./pages/Console";
+import LiveMission from "./pages/LiveMission";
+import Scan from "./pages/Scan";
 import Profile from "./pages/Profile";
 import Sources from "./pages/Sources";
 import { StoreProvider } from "./lib/store";
@@ -31,6 +33,8 @@ export default function App() {
           <Route element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="console" element={<Console />} />
+            <Route path="live" element={<LiveMission />} />
+            <Route path="scan" element={<Scan />} />
             <Route path="mental" element={<Mental />} />
             <Route path="musculoskeletal" element={<Musculoskeletal />} />
             <Route path="cardiovascular" element={<Cardiovascular />} />

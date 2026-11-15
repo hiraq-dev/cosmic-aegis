@@ -6,6 +6,7 @@ import { moodRows, recentActivity, vitalRows, exerciseRows } from "../lib/chartD
 import { today } from "../lib/dates";
 import Story from "../components/Story";
 import SpaceWeather from "../components/SpaceWeather";
+import RiskEngine from "../components/RiskEngine";
 import { AstronautArt } from "../components/AstronautArt";
 import { AlertsList } from "../components/AlertsList";
 import { MoodCheckIn } from "../components/forms";
@@ -214,6 +215,8 @@ export default function Dashboard() {
           </ul>
         </Panel>
       </div>
+
+      <RiskEngine />
 
       <SpaceWeather />
 

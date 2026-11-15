@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { Activity, BookOpen, Brain, Dumbbell, HeartPulse, LayoutDashboard, Menu, RotateCcw, Smile, TriangleAlert, User, X } from "lucide-react";
+import { Activity, BookOpen, Brain, Dumbbell, HeartPulse, LayoutDashboard, Globe2, Menu, ScanLine, RotateCcw, Smile, TriangleAlert, User, X } from "lucide-react";
 import { Logo, btnGhost } from "./ui";
 import Assistant from "./Assistant";
 import Starfield from "./Starfield";
@@ -11,6 +11,8 @@ import { REPO_URL, TEAM_MEMBERS, TEAM_NAME } from "../lib/team";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true, color: "#38bdf8" },
+  { to: "/live", label: "Live orbit", icon: Globe2, color: "#00f0ff" },
+  { to: "/scan", label: "Body scan", icon: ScanLine, color: "#00ff9d" },
   { to: "/console", label: "Habitat console", icon: Smile, color: "#00f0ff" },
   { to: "/mental", label: "Mental", icon: Brain, color: "#a78bfa" },
   { to: "/musculoskeletal", label: "Muscle & bone", icon: Dumbbell, color: "#ffb020" },
