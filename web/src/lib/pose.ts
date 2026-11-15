@@ -47,3 +47,21 @@ export function toAvatar(lm: LM[]) {
   const p = { lsh: pt(11), rsh: pt(12), lel: pt(13), rel: pt(14), lwr: pt(15), rwr: pt(16) };
   return Object.values(p).every(Boolean) ? (p as Record<string, [number, number]>) : null;
 }
+
+export type Pt3 = [number, number, number];
+export type Skeleton = (Pt3 | null)[] | null;
+/** 33 MediaPipe landmarks -> 3D points (x mirrored so the avatar moves like a mirror). Occluded points are null. */
+export function toSkeleton(lm: LM[]): Skeleton {
+  const out = lm.map((p) => (ok(p) ? ([(0.5 - p.x) * 1.8, (0.5 - p.y) * 1.8 + 0.2, -(p.z ?? 0) * 1.2] as Pt3) : null));
+  return out.filter(Boolean).length >= 8 ? out : null;
+}
+// [from, to, group]
+export const BONES: [number, number, string][] = [
+  [11, 12, "torso"], [11, 23, "torso"], [12, 24, "torso"], [23, 24, "torso"],
+  [11, 13, "larm"], [13, 15, "larm"], [12, 14, "rarm"], [14, 16, "rarm"],
+  [23, 25, "lleg"], [25, 27, "lleg"], [24, 26, "rleg"], [26, 28, "rleg"],
+  [0, 11, "head"], [0, 12, "head"],
+];
+const R: Record<number, Pt3> = { 0: [0, 0.85, 0], 11: [-0.28, 0.55, 0], 12: [0.28, 0.55, 0], 13: [-0.4, 0.2, 0], 14: [0.4, 0.2, 0], 15: [-0.45, -0.15, 0], 16: [0.45, -0.15, 0], 23: [-0.15, -0.15, 0], 24: [0.15, -0.15, 0], 25: [-0.17, -0.6, 0], 26: [0.17, -0.6, 0], 27: [-0.18, -0.95, 0], 28: [0.18, -0.95, 0] };
+/** Neutral reference posture shown when no camera data is flowing. */
+export const REFERENCE: (Pt3 | null)[] = Array.from({ length: 33 }, (_, i) => R[i] ?? null);

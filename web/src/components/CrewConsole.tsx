@@ -23,7 +23,7 @@ function Spark({ pts }: { pts: { t: number; v: number }[] }) {
 export default function CrewConsole() {
   const { data } = useStore();
   const [hr, setHr] = useState<{ t: number; v: number }[]>([]), [card, setCard] = useState<any>({}), [ble, setBle] = useState<HrConnection | null>(null), [bleErr, setBleErr] = useState("");
-  const [pose, setPose] = useState<any>(null), [region, setRegion] = useState(""), [kp, setKp] = useState<{ v: number | null; live: boolean }>({ v: null, live: false });
+  const [pose, setPose] = useState<any>(null), [sweep, setSweep] = useState(false), [region, setRegion] = useState(""), [kp, setKp] = useState<{ v: number | null; live: boolean }>({ v: null, live: false });
   const [log, setLog] = useState<{ me?: string; a?: AstraReply }[]>([]), [q, setQ] = useState("");
   const dev = useRef("");
 
@@ -77,8 +77,9 @@ export default function CrewConsole() {
       </Panel>
 
       <Panel title="Crew visualization (3D)">
-        <div className="h-72">{webgl ? <Suspense fallback={<p className="text-sm text-slate-400">Loading 3D…</p>}><Body3D pose={pose} region={region} onPick={setRegion} /></Suspense> : <p className="text-sm text-slate-400">WebGL is unavailable on this device.</p>}</div>
-        <p className="text-xs text-slate-400">Click a body part to select it. Arms follow your camera landmarks only while tracking is on; otherwise the reference posture is shown. It is a visualization, not a validated digital twin. {region && <>Selected: <b>{region}</b>.</>}</p>
+        <div className="h-72">{webgl ? <Suspense fallback={<p className="text-sm text-slate-400">Loading 3D…</p>}><Body3D pose={pose} region={region} onPick={setRegion} scanning={sweep} /></Suspense> : <p className="text-sm text-slate-400">WebGL is unavailable on this device.</p>}</div>
+        <p className="text-xs text-slate-400">Drag to rotate, scroll to zoom, click a body part to select it. The sweep ring is a visual effect; with the camera on, the full skeleton is drawn from your landmarks. Arms follow your camera landmarks only while tracking is on; otherwise the reference posture is shown. It is a visualization, not a validated digital twin. {region && <>Selected: <b>{region}</b>.</>}</p>
+        <button className="mb-1 rounded border border-cyan-400/40 px-2 py-1 text-xs text-cyan-200 hover:bg-cyan-400/10" onClick={() => { setSweep(true); setTimeout(() => setSweep(false), 5000); }}>Run 3D scan sweep</button>
         <Suspense fallback={null}><CameraPanel onPose={setPose} /></Suspense>
       </Panel>
 

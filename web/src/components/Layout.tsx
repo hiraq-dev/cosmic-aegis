@@ -4,6 +4,28 @@ import { Activity, RotateCcw, TriangleAlert } from "lucide-react";
 import { Logo, btnGhost } from "./ui";
 import Starfield from "./Starfield";
 import AstraRobot from "./AstraRobot";
+import { lazy, Suspense } from "react";
+const Scene3D = lazy(() => import("./Scene3D"));
+const gl = (() => { try { return !!document.createElement("canvas").getContext("webgl2") && !window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch { return false; } })();
+
+// Pointer-driven 3D tilt for glass panels (skipped for touch, reduced motion, and very tall panels).
+function useTilt() {
+  useEffect(() => {
+    if (!gl || !window.matchMedia("(pointer: fine)").matches) return;
+    let cur: HTMLElement | null = null;
+    const reset = () => { if (cur) { cur.style.transform = ""; cur = null; } };
+    const move = (e: PointerEvent) => {
+      const el = (e.target as HTMLElement).closest?.(".glass") as HTMLElement | null;
+      if (!el || el.offsetHeight > 520 || el.tagName === "DETAILS") { reset(); return; }
+      if (cur && cur !== el) reset();
+      cur = el; const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      el.style.transform = `perspective(900px) rotateX(${(-y * 5).toFixed(2)}deg) rotateY(${(x * 6).toFixed(2)}deg) translateZ(6px)`;
+      el.style.transition = "transform .08s linear";
+    };
+    document.addEventListener("pointermove", move, { passive: true }); document.addEventListener("pointerleave", reset);
+    return () => { document.removeEventListener("pointermove", move); reset(); };
+  }, []);
+}
 import { useStore } from "../lib/store";
 import { missionStatus, simulatedEnvironment } from "../lib/assess";
 import { today } from "../lib/dates";
@@ -55,12 +77,13 @@ function Ticker() {
 }
 
 export default function Layout() {
+  useTilt();
     const { resetDemo, data } = useStore();
   const ms = missionStatus(data);
 
   return (
     <div id="top" className="relative min-h-screen">
-      <Starfield />
+      {gl ? <Suspense fallback={<Starfield />}><Scene3D /></Suspense> : <Starfield />}
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded focus:bg-aegis-cyan focus:px-3 focus:py-2 focus:text-space-950">
         Skip to content
       </a>

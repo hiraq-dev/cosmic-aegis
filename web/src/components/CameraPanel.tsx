@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SquatCounter, kneeAngle, toAvatar, trackingConfidence } from "../lib/pose";
+import { SquatCounter, kneeAngle, toSkeleton, trackingConfidence } from "../lib/pose";
 import type { Pose } from "./Body3D";
 
 const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm";
@@ -28,7 +28,7 @@ export default function CameraPanel({ onPose }: { onPose: (p: Pose) => void }) {
           last = v.currentTime; frames++;
           const res = lmk.detectForVideo(v, performance.now());
           const lm = res.landmarks?.[0];
-          if (lm && trackingConfidence(lm, [11, 12, 23, 24]) >= 0.6) { onPose(toAvatar(lm) as Pose); counter.push(kneeAngle(lm)); } else { onPose(null); counter.push(null); }
+          if (lm && trackingConfidence(lm, [11, 12, 23, 24]) >= 0.6) { onPose(toSkeleton(lm)); counter.push(kneeAngle(lm)); } else { onPose(null); counter.push(null); }
           if (frames % 15 === 0) setStat({ ...counter.summary((performance.now() - t0) / 1000), fps: +(frames / ((performance.now() - tStart) / 1000)).toFixed(1) });
         }
         v.requestVideoFrameCallback ? v.requestVideoFrameCallback(loop) : requestAnimationFrame(loop);
