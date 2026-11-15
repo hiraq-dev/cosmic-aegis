@@ -5,7 +5,7 @@ https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/
 
 Team: Team AEGIS (Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar Mani Kandan). Use your registered Space Apps team name if it differs. Check the official Space Apps site for current field names, limits and the deadline. The text below says plainly that all data is simulated, so do not edit that out.
 
-Only C.O.S.M.I.C. AEGIS is deployed and submitted. The `astra-care/` folder in the repository is an unused side prototype and is not published.
+Only C.O.S.M.I.C. AEGIS is deployed and submitted.
 
 ---
 
