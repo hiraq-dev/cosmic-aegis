@@ -93,7 +93,7 @@ export default function Layout() {
             </span>
           </NavLink>
 
-          <nav aria-label="Main" className="hidden items-center gap-1 xl:flex">
+          <nav aria-label="Main" className="hidden items-center gap-1 2xl:flex">
             {NAV.map(({ to, label, icon: Icon, end, color }) => (
               <NavLink key={to} to={to} end={end} className={link(color)} style={{ ["--c" as string]: color }}>
                 <Icon size={16} aria-hidden="true" style={{ color }} />
@@ -111,13 +111,13 @@ export default function Layout() {
             <Link to="/console?sos=1" className="font-display inline-flex items-center gap-1.5 rounded-md border border-red-400 bg-gradient-to-br from-red-900 to-hud-crimson px-3 py-1.5 text-[11px] font-bold tracking-wider text-white shadow-[0_0_12px_rgba(255,42,85,.4)] hover:shadow-[0_0_20px_rgba(255,42,85,.8)]">
               <TriangleAlert size={14} aria-hidden="true" /> <span className="hidden sm:inline">SOS PRACTICE</span><span className="sm:hidden">SOS</span>
             </Link>
-            <button className="rounded-lg border border-white/15 p-2 text-slate-200 hover:bg-white/10 xl:hidden" aria-expanded={open} aria-controls="mobile-nav" aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((o) => !o)}>
+            <button className="rounded-lg border border-white/15 p-2 text-slate-200 hover:bg-white/10 2xl:hidden" aria-expanded={open} aria-controls="mobile-nav" aria-label={open ? "Close menu" : "Open menu"} onClick={() => setOpen((o) => !o)}>
               {open ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
         {open && (
-          <nav id="mobile-nav" aria-label="Main mobile" className="grid grid-cols-2 gap-1.5 border-t border-white/10 px-4 py-3 xl:hidden">
+          <nav id="mobile-nav" aria-label="Main mobile" className="grid grid-cols-2 gap-1.5 border-t border-white/10 px-4 py-3 2xl:hidden">
             {NAV.map(({ to, label, icon: Icon, end, color }) => (
               <NavLink key={to} to={to} end={end} className={link(color)} style={{ ["--c" as string]: color }} onClick={() => setOpen(false)}>
                 <Icon size={16} aria-hidden="true" style={{ color }} />

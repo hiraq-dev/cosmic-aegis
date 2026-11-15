@@ -36,7 +36,7 @@ function landPath(): string {
     const polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
     for (const p of polys) for (const ring of p) rings.push(ring);
   }
-  return rings.map((r) => "M" + r.map(([lo, la]) => `${px(lo).toFixed(1)},${py(la).toFixed(1)}`).join("L") + "Z").join("");
+  return rings.map((r) => r.map(([lo, la], i) => `${i === 0 || Math.abs(lo - r[i - 1][0]) > 180 ? "M" : "L"}${px(lo).toFixed(1)},${py(la).toFixed(1)}`).join("")).join("");
 }
 
 // Split a track into segments so the line does not cross the whole map at the antimeridian.

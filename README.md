@@ -47,6 +47,9 @@ design also includes delay-tolerant messaging and SOS rehearsal.
 
 The site opens on the **Dashboard**, which begins with a 30-second animated, narrated story.
 
+- **Live orbit (`/live`), real-time data with coordinates:** the ISS position, altitude, speed and orbit track updated every 5 seconds on a world map, open **NASA EONET** natural events plotted by latitude and longitude, the South Atlantic Anomaly radiation region (approximate) with a countdown to the next pass, and live **NOAA SWPC** radiation-storm (S), geomagnetic (G) and radio-blackout (R) scales with the Kp index.
+- **Body scan (`/scan`), real-time AI:** a neural network (**MediaPipe BlazePose**) runs in the browser on the webcam or a photo. It finds 33 body landmarks and computes joint angles, posture and symmetry scores, counts squats, and estimates fatigue from rep speed and depth. Video never leaves the device.
+- **AEGIS risk engine (Dashboard):** on-device algorithms: personal-baseline z-score anomaly detection, EWMA smoothing, least-squares trend with a 7-day projection, and a logistic fusion into a 0-100 readiness index with an explanation of what moved it.
 - **Dashboard:** story, profile, mission status, overall 0-100 score (Nominal / Watch / Review), alerts, 14-day trends, simulated live ticker.
 - **Live NASA space weather:** real events from **NASA DONKI** (geomagnetic storms, solar energetic particle events, radiation belt enhancements, CMEs) turned into a QUIET / WATCH / ELEVATED radiation-awareness label.
 - **NASA HRP mapping:** the five hazards, each linked to the AEGIS feature that responds to it.
@@ -62,8 +65,9 @@ Screenshots are in [`web/shots/`](web/shots).
 
 ## Architecture
 
-AEGIS is a **frontend-only single-page app**. There is no server and no account. Data stays in the browser, and the
-only network call is the read-only NASA DONKI request.
+AEGIS is a **frontend-only single-page app**. There is no server and no account. Health data and video stay in the
+browser. Network calls are read-only public data feeds (NASA DONKI and EONET, NOAA SWPC, an ISS tracker) plus a one-time
+download of the pose model.
 
 ```mermaid
 flowchart LR
@@ -76,7 +80,20 @@ flowchart LR
     BOT["assistant.ts<br/>scripted replies and guidance"]
     SP["speech.ts<br/>Web Speech API voice"]
     SW["SpaceWeather<br/>30-min cache + snapshot fallback"]
+    AN["analytics.ts<br/>z-score, EWMA, OLS forecast, readiness"]
+    LV["LiveMission<br/>ISS map, EONET, NOAA scales"]
+    SC["Scan<br/>MediaPipe BlazePose on webcam"]
   end
+
+  ST --> AN
+  AN --> UI
+  LV --> UI
+  SC --> UI
+  SC --> ST
+  LV -. "HTTPS" .-> ISS[("wheretheiss.at<br/>ISS position")]
+  LV -. "HTTPS" .-> EO[("NASA EONET<br/>events with coordinates")]
+  LV -. "HTTPS" .-> SWPC[("NOAA SWPC<br/>S/G/R scales, Kp")]
+  SC -. "model download once" .-> MP[("MediaPipe pose model")]
 
   UI <--> ST
   ST --> AS
@@ -133,6 +150,10 @@ React 19, TypeScript, Vite 8, React Router 7, Tailwind CSS 4, Recharts, lucide-r
 | Forms with validation, charts, rule-based alerts, local saving | Implemented |
 | Voice guidance, scripted assistant, 30-second story, SOS practice, delay-tolerant queue | Implemented (simulated scenario) |
 | **Space-weather events from NASA DONKI (api.nasa.gov)** | **Live NASA data** |
+| **Open natural events with coordinates from NASA EONET** | **Live NASA data** |
+| **ISS position and orbit (wheretheiss.at); S/G/R scales and Kp (NOAA SWPC)** | **Live public data** |
+| **Webcam pose estimation (MediaPipe BlazePose) and movement metrics** | **Real on-device AI, movement demo only** |
+| Z-score, EWMA, regression and readiness index | Real algorithms on simulated entries |
 | Astronaut, mission, history, vitals, cabin readings, bone status, ticker | Simulated demo data |
 | Computer-vision exercise analysis, ML health analysis, wearables, language-model assistant | Future integration |
 | Clinical validation, flight-surgeon workflows | Future work with medical teams |
@@ -140,6 +161,8 @@ React 19, TypeScript, Vite 8, React Router 7, Tailwind CSS 4, Recharts, lucide-r
 ## NASA resources
 
 - NASA DONKI Space Weather Database via NASA Open APIs (live): https://api.nasa.gov/
+- NASA EONET, Earth Observatory Natural Event Tracker (live, with coordinates): https://eonet.gsfc.nasa.gov/
+- NOAA Space Weather Prediction Center (live scales and Kp): https://www.swpc.noaa.gov/
 - 5 Hazards of Human Spaceflight (NASA HRP): https://www.nasa.gov/hrp/hazards/
 - Risks of Human Spaceflight (NASA HRP): https://www.nasa.gov/hrp/risks/
 - Ongoing HRP Research in Space: https://www.nasa.gov/hrp/ongoing-hrp-research/
