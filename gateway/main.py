@@ -1,7 +1,10 @@
 import time
 
+import asyncio
+
 import httpx
 from fastapi import Request, Response
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from common import load_config, make_app
@@ -15,26 +18,33 @@ UP = cfg["upstream"]
 last_triage = {"at": 0, "result": None}
 
 
+_client = None
+
+
 async def call(method, url, **kw):
-    async with httpx.AsyncClient(timeout=kw.pop("timeout", 5)) as c:
-        return await c.request(method, url, **kw)
+    """One shared client: building an AsyncClient (TLS context) per request is slow on some machines."""
+    global _client
+    if _client is None:
+        _client = httpx.AsyncClient()
+    return await _client.request(method, url, timeout=kw.pop("timeout", 5), **kw)
 
 
 @app.get("/services")
 async def services():
-    out = {}
-    for name, url in UP.items():
+    async def check(url):
         try:
-            out[name] = (await call("GET", f"{url}/health", timeout=3)).json()["status"]
+            return (await call("GET", f"{url}/health", timeout=2)).json()["status"]
         except Exception:
-            out[name] = "down"  # one pipeline failing must not break the others
-    return out
+            return "down"  # one pipeline failing must not break the others
+
+    results = await asyncio.gather(*(check(u) for u in UP.values()))   # concurrent: slow failure can't stack
+    return dict(zip(UP.keys(), results))
 
 
 @app.get("/kinetic/status")
 async def kinetic_status():
     try:
-        return (await call("GET", f"{UP['kinetic_guardian']}/status")).json()
+        return (await call("GET", f"{UP['kinetic_guardian']}/status", timeout=2)).json()
     except Exception:
         return {"error": "kinetic_guardian unavailable"}
 
@@ -51,7 +61,11 @@ async def kinetic_frame():
 @app.post("/triage")
 async def triage(request: Request):
     try:
-        r = await call("POST", f"{UP['cognitive_triage']}/triage", json=await request.json(), timeout=120)
+        body = await request.json()
+    except Exception:
+        return JSONResponse({"status": "bad_input", "error": "request body must be JSON"}, status_code=400)
+    try:
+        r = await call("POST", f"{UP['cognitive_triage']}/triage", json=body, timeout=120)
         data = r.json()
     except Exception as e:
         return {"status": "unavailable", "error": str(e)}
@@ -62,7 +76,7 @@ async def triage(request: Request):
 @app.get("/overview")
 async def overview():
     """Cross-validated alert level. critical = pipelines agree; warning = only one flags."""
-    k = await kinetic_status()
+    k, svcs = await asyncio.gather(kinetic_status(), services())
     t = last_triage["result"] if time.time() - last_triage["at"] < cfg["alerting"]["cooldown_seconds"] * 10 else None
     kin_flag = bool(k.get("alert"))
     tri_flag = bool(t and t.get("status") == "ok" and t["symptoms"]["severity"] in ("moderate", "high"))
@@ -72,4 +86,4 @@ async def overview():
         level = "warning"
     else:
         level = "nominal"
-    return {"level": level, "kinetic": k, "triage": t, "services": await services()}
+    return {"level": level, "kinetic": k, "triage": t, "services": svcs}

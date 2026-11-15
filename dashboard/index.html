@@ -13,7 +13,7 @@ h1{color:var(--teal);font-size:1.3rem;margin:0}
 .panel{background:var(--panel);border:1px solid #33404a;border-radius:10px;padding:1rem}
 h2{font-size:.9rem;color:var(--teal);margin:0 0 .6rem;text-transform:uppercase;letter-spacing:.05em}
 img{max-width:100%;border-radius:6px;background:#111}
-.row{display:flex;justify-content:space-between;padding:.2rem 0;color:var(--mut)}.row b{color:var(--txt)}
+.row{display:flex;justify-content:space-between;gap:1rem;padding:.2rem 0;color:var(--mut)}.row b{color:var(--txt);text-align:right;overflow-wrap:anywhere}
 .down{color:var(--crit)}.ok{color:var(--teal)}
 pre{white-space:pre-wrap;font-size:.8rem;color:var(--txt);margin:.4rem 0 0}
 button{background:var(--teal);color:#0b1417;border:0;border-radius:6px;padding:.5rem 1rem;font-weight:600;cursor:pointer}
@@ -24,7 +24,7 @@ input,textarea{width:100%;background:var(--bg);color:var(--txt);border:1px solid
 <header><h1>C.O.S.M.I.C. AEGIS &mdash; Mission Control</h1><span id="level" class="badge">...</span></header>
 <div class="grid">
   <div class="panel"><h2>Kinetic Guardian</h2>
-    <img id="frame" alt="No video feed" height="220">
+    <img id="frame" alt="No video feed" height="220" onerror="this.style.display='none'" onload="this.style.display=''">
     <div id="kin"></div></div>
   <div class="panel"><h2>Cognitive Triage</h2>
     <input type="file" id="img" accept="image/*">
@@ -34,10 +34,12 @@ input,textarea{width:100%;background:var(--bg);color:var(--txt);border:1px solid
   <div class="panel"><h2>Systems</h2><div id="svc"></div></div>
 </div>
 <script>
-const API='http://localhost:8000';
+const API='http://127.0.0.1:8000';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const row=(k,v)=>`<div class="row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`;
+let polling=false;
 async function poll(){
+  if(polling)return; polling=true;
   try{
     const o=await (await fetch(API+'/overview')).json();
     const l=document.getElementById('level');l.textContent=o.level.toUpperCase();l.className='badge '+o.level;
@@ -49,6 +51,7 @@ async function poll(){
       `<div class="row"><span>${esc(n)}</span><b class="${v==='ok'?'ok':'down'}">${esc(v)}</b></div>`).join('');
     document.getElementById('frame').src=API+'/kinetic/frame.jpg?'+Date.now();
   }catch(e){document.getElementById('level').textContent='GATEWAY DOWN';}
+  finally{polling=false;}
 }
 async function runTriage(){
   const f=document.getElementById('img').files[0];let b64='';

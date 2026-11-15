@@ -19,8 +19,9 @@ fw = lambda p: p.replace("\\", "/")
 
 SERVICES = [("rag_service", 8003), ("cognitive_triage", 8002), ("kinetic_guardian", 8001), ("gateway", 8000)]
 SUBS = [
-    ("http://rag_service:", "http://localhost:"), ("http://kinetic_guardian:", "http://localhost:"),
-    ("http://cognitive_triage:", "http://localhost:"),
+    # 127.0.0.1 not localhost: on Windows a refused localhost connect tries IPv6 first and is slow
+    ("http://rag_service:", "http://127.0.0.1:"), ("http://kinetic_guardian:", "http://127.0.0.1:"),
+    ("http://cognitive_triage:", "http://127.0.0.1:"),
     ("/data/protocols", fw(os.path.join(ROOT, "rag_service/data/protocols"))),
     ("/data/index", fw(os.path.join(ROOT, "rag_service/data/index"))),
     ("/data/sample_ared.mp4", fw(os.path.join(ROOT, "data/video/sample_ared.mp4"))),

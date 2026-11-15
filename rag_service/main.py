@@ -1,4 +1,5 @@
 import os
+import threading
 
 from pydantic import BaseModel
 
@@ -24,6 +25,17 @@ index = Index(embed, os.path.dirname(cfg["index_path"]))
 index.load()
 
 
+def _warm_up():
+    """Load the embedding model at startup so the first real query is not slow."""
+    try:
+        embed(["warm-up"])
+    except Exception:
+        pass  # surfaced on first real query instead
+
+
+threading.Thread(target=_warm_up, daemon=True).start()
+
+
 class Query(BaseModel):
     query: str
 
@@ -37,7 +49,7 @@ def ingest():
 @app.post("/query")
 def query(q: Query):
     hits = index.search(q.query, cfg["top_k"])
-    return make_plan(q.query, hits)
+    return make_plan(q.query, hits, cfg.get("min_score", 0.5))
 
 
 @app.get("/stats")
