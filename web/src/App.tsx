@@ -1,15 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Layout from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
-import Mental from "./pages/Mental";
-import Musculoskeletal from "./pages/Musculoskeletal";
-import Cardiovascular from "./pages/Cardiovascular";
-import Console from "./pages/Console";
-import LiveMission from "./pages/LiveMission";
-import Scan from "./pages/Scan";
-import Profile from "./pages/Profile";
-import Sources from "./pages/Sources";
+import Home from "./pages/Home";
 import { StoreProvider } from "./lib/store";
 
 function ScrollTop() {
@@ -24,6 +16,9 @@ function ScrollTop() {
   return null;
 }
 
+// Old menu URLs still work: they jump to the matching section of the single page.
+const OLD: Record<string, string> = { live: "live", console: "console", scan: "", mental: "mental", musculoskeletal: "musculoskeletal", cardiovascular: "cardiovascular", profile: "profile", sources: "sources" };
+
 export default function App() {
   return (
     <StoreProvider>
@@ -31,15 +26,8 @@ export default function App() {
         <ScrollTop />
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="console" element={<Console />} />
-            <Route path="live" element={<LiveMission />} />
-            <Route path="scan" element={<Scan />} />
-            <Route path="mental" element={<Mental />} />
-            <Route path="musculoskeletal" element={<Musculoskeletal />} />
-            <Route path="cardiovascular" element={<Cardiovascular />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="sources" element={<Sources />} />
+            <Route index element={<Home />} />
+            {Object.entries(OLD).map(([p, h]) => <Route key={p} path={p} element={<Navigate to={h ? `/#${h}` : "/"} replace />} />)}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

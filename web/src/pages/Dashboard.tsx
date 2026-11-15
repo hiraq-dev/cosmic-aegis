@@ -6,6 +6,7 @@ import { moodRows, recentActivity, vitalRows, exerciseRows } from "../lib/chartD
 import { today } from "../lib/dates";
 import Story from "../components/Story";
 import NasaContext from "../components/NasaContext";
+import CrewConsole from "../components/CrewConsole";
 import RiskEngine from "../components/RiskEngine";
 import ScanSession from "../components/ScanSession";
 import { AlertsList } from "../components/AlertsList";
@@ -79,6 +80,8 @@ export default function Dashboard() {
       <Story />
 
       <ScanSession />
+
+      <CrewConsole />
 
       {/* Hero */}
       <section className="glass overflow-hidden p-6 md:p-8">
