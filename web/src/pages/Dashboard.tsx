@@ -11,6 +11,16 @@ import { MoodCheckIn } from "../components/forms";
 import { Sparkline, TrendLines } from "../components/charts";
 import { DemoBadge, Disclaimer, Panel, Stat, StatusPill } from "../components/ui";
 import type { Status } from "../lib/types";
+import { SOURCES } from "../lib/team";
+
+// The five hazards of human spaceflight (NASA Human Research Program) mapped to AEGIS features.
+const NASA_HAZARDS = [
+  { hazard: "Radiation", feature: "Simulated radiation reading in the live ticker and mission status.", to: "/", color: "#a78bfa" },
+  { hazard: "Isolation & confinement", feature: "Daily mood, stress and sleep check-in, companion and breathing pacer.", to: "/mental", color: "#00ff9d" },
+  { hazard: "Distance from Earth", feature: "Delay-tolerant message queue and SOS practice with signal delay.", to: "/console?view=ground", color: "#38bdf8" },
+  { hazard: "Gravity fields", feature: "Muscle and bone tracking from exercise consistency and strength trend.", to: "/musculoskeletal", color: "#ffb020" },
+  { hazard: "Hostile / closed environments", feature: "Cabin CO2 and temperature readings plus cardiovascular vitals.", to: "/cardiovascular", color: "#ff6b8b" },
+];
 
 export default function Dashboard() {
   const { data } = useStore();
@@ -203,6 +213,29 @@ export default function Dashboard() {
           </ul>
         </Panel>
       </div>
+
+      <Panel title="Built from NASA Human Research Program resources" icon={<Atom size={16} aria-hidden="true" />} action={<DemoBadge text="NASA HRP" />}>
+        <p className="mb-3 text-sm text-slate-300">
+          AEGIS is organised around the five hazards of human spaceflight that NASA's Human Research Program describes. Each hazard maps to a feature you can try on this site.
+        </p>
+        <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-5">
+          {NASA_HAZARDS.map((h) => (
+            <Link key={h.hazard} to={h.to} className="rounded-lg border border-white/10 bg-white/5 p-3 transition hover:border-aegis-cyan/50 hover:bg-white/10">
+              <div className="hud-mono text-[10px] tracking-widest" style={{ color: h.color }}>{h.hazard.toUpperCase()}</div>
+              <p className="mt-1 text-slate-200">{h.feature}</p>
+              <span className="mt-2 inline-flex items-center gap-1 text-xs text-aegis-cyan">Open <ArrowRight size={12} aria-hidden="true" /></span>
+            </Link>
+          ))}
+        </div>
+        <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-xs">
+          {SOURCES.slice(0, 3).map((s) => (
+            <li key={s.url}>
+              <a className="text-aegis-cyan underline hover:text-white" href={s.url} target="_blank" rel="noreferrer">{s.name.replace(" (NASA Human Research Program)", "").replace(" (NASA)", "")}</a>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-[11px] text-slate-400">Sources: NASA Human Research Program public pages. Values in AEGIS stay simulated; NASA does not endorse this project.</p>
+      </Panel>
 
       <Panel title="What is real in this prototype">
         <div className="grid gap-4 text-sm md:grid-cols-3">
