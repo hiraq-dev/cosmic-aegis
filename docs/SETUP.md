@@ -24,13 +24,13 @@ Environmental sensors POST to `/ingest` with `X-Device-Id` and `X-Device-Token` 
 | 1 | Physical sensor readings visible | **Blocked** (no hardware). Parser unit tests pass (6). |
 | 2 | Stopping device -> stale/disconnected | Passed in API tests (stale at 40 s, disconnected on state report). |
 | 3 | Readings survive refresh/server restart | Passed (SQLite restart test). Postgres **not tested** (no Postgres available). |
-| 4 | Camera movement changes landmarks | Pose code exists (`/scan` page, earlier verified); the single-page 3D avatar is **not yet driven by landmarks** (`pose` prop is wired but passed null). |
+| 4 | Camera movement changes landmarks | Avatar arms are driven by MediaPipe landmarks (visibility >= 0.6, new frames only, camera released on stop) in `CameraPanel`. Maths unit-tested (angles, occlusion, squat counter, calibration). **Not tested with a live camera in this run.** |
 | 5 | NASA genuine timestamps | Verified against live upstreams: observed_at for NOAA Kp/scales, EONET, GIBS, ISS. DONKI returned 429 on DEMO_KEY and shows unavailable. Set NASA_API_KEY. |
 | 6 | Upstream outage never leaves LIVE | Passed (mocked 429; cached with age). |
 | 7 | Assistant separates observed/research/estimates | Sections returned by API; tested retrieval-only and crisis notice. Language-model path **not exercised** (no key). |
 | 8 | Fresh account has no history | Passed. |
-| 9 | Single page, no menu | Implemented; not browser-tested in this run. |
-| 10 | Build/tests/deploy | 32 pytest + 6 vitest pass; web build passes. **No backend deployment exists**; the Vercel site only hosts the frontend and needs a reachable backend (VITE_API_URL). Not a complete production deployment. |
+| 9 | Single page, no menu | Scripted browser smoke on a production build against a local API: registered via the UI, no nav/aside element, 2 WebGL canvases, stream connected, fresh account empty, NASA rows UNAVAILABLE with polling off, a replayed reading shown as Historical replay, check-in saved. |
+| 10 | Build/tests/deploy | 32 pytest + 14 vitest pass; web build passes. **No backend deployment exists**; the Vercel site only hosts the frontend and needs a reachable backend (VITE_API_URL). Not a complete production deployment. |
 
 ## Known gaps
-No browser end-to-end tests; no pose worker/rep counting/calibration in the new page; SSE is single-process; Alembic migration not run on Postgres; reviewer UI is API-only; breathing-from-shoulders output remains only in the legacy `/scan` code, not in the new page.
+Pose runs on the main thread, not a worker; only squat counting; browser smoke was a manual script, not a Playwright suite; SSE is single-process; Alembic migration not run on Postgres; reviewer UI is API-only; breathing-from-shoulders output remains only in the legacy `/scan` code, not in the new page.

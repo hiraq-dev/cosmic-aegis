@@ -3,6 +3,7 @@ import { api, hasToken, setToken, stream, API } from "./lib/api";
 import { bleSupported, connectHeartRate, type HrConnection } from "./lib/ble";
 
 const Body3D = lazy(() => import("./components/Body3D"));
+const CameraPanel = lazy(() => import("./components/CameraPanel"));
 const Globe3D = lazy(() => import("./components/Globe3D"));
 const webgl = (() => { try { return !!document.createElement("canvas").getContext("webgl2"); } catch { return false; } })();
 
@@ -121,7 +122,7 @@ function FamilyCard() {
 export default function Workspace() {
   const [authed, setAuthed] = useState(hasToken());
   const [me, setMe] = useState<any>(null), [cards, setCards] = useState<any>({}), [nasa, setNasa] = useState<any>({}), [notes, setNotes] = useState<any[]>([]), [checkins, setCheckins] = useState<any[]>([]);
-  const [hr, setHr] = useState<{ t: number; v: number }[]>([]), [region, setRegion] = useState(""), [ble, setBle] = useState<HrConnection | null>(null), [bleErr, setBleErr] = useState(""), [live, setLive] = useState(false);
+  const [pose, setPose] = useState<any>(null), [hr, setHr] = useState<{ t: number; v: number }[]>([]), [region, setRegion] = useState(""), [ble, setBle] = useState<HrConnection | null>(null), [bleErr, setBleErr] = useState(""), [live, setLive] = useState(false);
   const [chat, setChat] = useState<any[]>([]), [q, setQ] = useState(""), [astat, setAstat] = useState<any>(null), [pending, setPending] = useState<any[]>([]);
   const dev = useRef("");
 
@@ -209,10 +210,11 @@ export default function Workspace() {
         <div className="space-y-3">
           <Card title="Crew visualization (3D)">
             <div className="h-72">
-              {webgl ? <Suspense fallback={<p className="text-sm text-slate-400">Loading 3D…</p>}><Body3D pose={null} region={region} onPick={setRegion} /></Suspense>
+              {webgl ? <Suspense fallback={<p className="text-sm text-slate-400">Loading 3D…</p>}><Body3D pose={pose} region={region} onPick={setRegion} /></Suspense>
                 : <p className="text-sm text-slate-400">WebGL is unavailable; showing text only. Selected region: {region || "none"}.</p>}
             </div>
-            <p className="text-xs text-slate-400">Reference posture, not a validated digital twin. Limbs move only from camera landmarks. {region && <>Selected: <b>{region}</b>.</>} Camera frames stay in this browser.</p>
+            <p className="text-xs text-slate-400">Reference posture, not a validated digital twin. Limbs move only from camera landmarks. {region && <>Selected: <b>{region}</b>.</>} </p>
+            <Suspense fallback={null}><CameraPanel onPose={setPose} /></Suspense>
           </Card>
           <Card title="Heart rate, last hour">{hr.length ? <Spark pts={hr} /> : <p className="text-sm text-slate-400">No readings yet. Pair a sensor to begin.</p>}</Card>
         </div>
