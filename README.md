@@ -1,162 +1,63 @@
-# C.O.S.M.I.C. AEGIS
+C.O.S.M.I.C. AEGIS - website prototype
+Understand Your Health Beyond Earth. By Team AEGIS (Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar Mani Kandan) for the NASA Space Apps Challenge 2026, Create Health Monitoring Software for Astronauts on Space Missions.
 
-> **Team AEGIS website prototype in [`web/`](web/README.md)** - live at https://cosmic-aegis-beryl.vercel.app.
-> "Understand Your Health Beyond Earth": a dashboard with a 30-second narrated story, mental health, muscle and bone
-> and cardiovascular modules, a ten-module habitat console, SOS practice, a voice-guided assistant, and a live NASA
-> DONKI space-weather panel (health entries are demo data, not a medical device).
-> Run: `cd web && npm install && npm run dev`. The text below describes the earlier Python edge-AI backend prototype.
+Live site: https://cosmic-aegis-beryl.vercel.app
 
-**Cottbus Orbital Software for Medical Informatics & Care - Aerospace Edge-Guardian for Informatics & Security**
+Prototype for demonstration only. Not a medical device. It does not diagnose, predict or prevent any condition. Health entries are sample data and every threshold is illustrative. Not affiliated with or endorsed by NASA or the Canadian Space Agency. Code, text and artwork were created with AI assistance (Claude by Anthropic).
 
-An offline, containerised, dual-pipeline edge-AI prototype that monitors astronaut health and suggests
-cited treatment procedures when Earth is too far away to help (up to a 40-minute radio round trip to Mars).
+What it is
+The site opens on the Dashboard, which starts with a 30-second animated, narrated story (problem, why it matters, our idea, what we built, limits).
 
-> **Prototype for decision support only. It is not a medical device and does not diagnose.**
-> Built for the NASA Space Apps Challenge 2026.
+Dashboard: story, profile, mission status, overall score, alerts, 14-day trends, recent activity, a simulated live ticker (heart rate, oxygen, CO2, cabin temperature, radiation).
+Live NASA space weather: real events from NASA DONKI (geomagnetic storms, solar particle events, radiation belt enhancements, CMEs) turned into a QUIET / WATCH / ELEVATED radiation-awareness label.
+NASA HRP mapping: NASA's five hazards of human spaceflight, each linked to the AEGIS feature that responds to it.
+Mental health: daily check-in (mood, stress, fatigue, sleep), trends, gentle suggestions and alerts.
+Muscle and bone: exercise log, strength trend, clickable body figure, activity-based bone status.
+Cardiovascular: vital-signs entry with validation, trends, warning-sign information. Never claims to diagnose or predict.
+Habitat console (/console): ten modules, including an astronaut companion with 4-7-8 breathing pacer and reaction test, a mock ground-control view with signal delay, a delay-tolerant message queue, a module checklist, and a hex byte viewer.
+SOS practice: 10-second countdown with siren tone. Practice only, nothing is sent.
+AEGIS assistant: floating chat that explains your own entries, with spoken guidance (Web Speech API) built from your data. It is scripted and rule-based, not an AI model. Emergency or crisis wording is redirected to real help.
+Profile and Sources: optional history, NASA/CSA references, and a real-versus-simulated table.
+Screenshots
+See shots (dashboard, story, modules, trends, live space weather, NASA hazards, console, assistant, health pages).
 
-## Architecture
+Run it
+Requires Node 20+.
 
-```mermaid
-flowchart LR
-  subgraph internal["pipeline_net (internal, no internet)"]
-    KG["kinetic_guardian :8001<br/>YOLOv8-pose (ONNX) -> joint angles -> reps -> fatigue"]
-    CT["cognitive_triage :8002<br/>VLM -> validated symptom JSON"]
-    RAG["rag_service :8003<br/>embeddings + FAISS over protocols"]
-    GW["gateway :8000<br/>proxy + cross-checked alert level"]
-  end
-  UI["dashboard :8080<br/>Mission Control"]
-  CAM[("video / camera")] --> KG
-  IMG[("symptom image")] --> UI
-  CT -->|symptom query| RAG
-  KG --> GW
-  CT --> GW
-  RAG --> GW
-  GW --> UI
-```
+cd web
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # type-check + production build into dist/
+npm run preview    # serve the production build
+No backend and no login. Entries are saved in your browser's localStorage (key cosmic-aegis-demo-v1). The footer's Reset demo data button restores the sample data.
 
-Design principles:
+Optional: set VITE_NASA_API_KEY to your free key from https://api.nasa.gov. Without it the site uses NASA's shared DEMO_KEY, which is rate limited; if a call fails, the space-weather panel shows a clearly labelled snapshot of real events.
 
-- **Separation of concerns.** Spatial tracking (pipeline 1) and medical reasoning (pipeline 2) are different
-  models in different containers with no shared memory. If the kinetic pipeline crashes, triage keeps running.
-- **Config-driven.** Every service reads its own `config.json` (mounted read-only).
-- **Offline.** ML services sit on an `internal` Docker network with no internet access; model weights and the
-  embedding model are cached locally beforehand.
-- **Citation-only answers.** The RAG service returns excerpts from the protocol corpus with source and page.
-  It does not generate free text, so it cannot invent medical advice. Irrelevant queries return "no protocol
-  found, escalate".
-- **Distrust model output.** VLM output is parsed and validated; malformed JSON, unknown conditions or low
-  confidence become "no finding".
-- **Sensor-glitch defence.** A form alert needs 5 consecutive bad frames.
-- **Alert agreement.** `critical` only when both pipelines flag; one flag is `warning`.
-- **Hardened containers.** Read-only filesystems, all Linux capabilities dropped, `no-new-privileges`, memory
-  limits, healthchecks; ports published on localhost only.
+Tech
+React 19, TypeScript, Vite 8, React Router 7, Tailwind CSS 4, Recharts, Lucide icons. Web Speech API (voice), Web Audio (tones), Canvas (starfield). Deployed on Vercel as a static site (vercel.json rewrites routes to index.html).
 
-### Services
+Real versus simulated
+Part	Status
+Forms with validation, charts, rule-based alerts, local saving	Implemented
+Voice guidance, scripted assistant, 30-second story, SOS practice, delay-tolerant queue	Implemented (simulated scenario)
+Space weather events from NASA DONKI (api.nasa.gov)	Live NASA data
+Astronaut, mission, 14 days of history, vitals, cabin readings, bone status, ticker	Simulated demo data
+Computer-vision exercise analysis, ML health analysis, wearable sensors, language-model assistant	Future integration
+Clinical validation, flight-surgeon workflows	Future work with medical teams
+NASA resources
+NASA DONKI Space Weather Database via NASA Open APIs (live): https://api.nasa.gov/
+5 Hazards of Human Spaceflight (NASA HRP): https://www.nasa.gov/hrp/hazards/
+Risks of Human Spaceflight (NASA HRP): https://www.nasa.gov/hrp/risks/
+Ongoing HRP Research in Space: https://www.nasa.gov/hrp/ongoing-hrp-research/
+HRP evidence reports (NTRS): https://ntrs.nasa.gov/api/citations/20170004604/downloads/20170004604.pdf and https://ntrs.nasa.gov/api/citations/20150016006/downloads/20150016006.pdf
+Future integration points
+src/integrations/ holds typed stubs marked // FUTURE INTEGRATION: ... (computer vision, ML health analysis, wearable sensors). The scripted assistant in src/lib/assistant.ts is isolated so a language model could replace it. The Python services in the repository root are an earlier, separate backend prototype.
 
-| Dir | Port | Role | Key endpoints |
-|---|---|---|---|
-| `kinetic_guardian/` | 8001 | Pose estimation, rep counting, fatigue/form score | `/status`, `/frame.jpg`, `/reset` |
-| `cognitive_triage/` | 8002 | Image -> symptom JSON -> RAG plan | `/triage`, `/info` |
-| `rag_service/` | 8003 | Ingest + search protocol documents | `/ingest`, `/query`, `/stats` |
-| `gateway/` | 8000 | Single entry point, alert level | `/services`, `/overview`, `/triage`, `/kinetic/*` |
-| `dashboard/` | 8080 | Static Mission Control UI | - |
+Deploy on Vercel
+Root Directory web, Framework Preset Vite, Build npm run build, Output dist. Optional env var: VITE_NASA_API_KEY. Pushes to main deploy automatically.
 
-Shared code is in `shared/common.py`. One-time setup scripts are in `scripts/`.
-
-## Run instructions
-
-### Prerequisites
-- Docker with Compose v2 (optional: NVIDIA Container Toolkit for GPU)
-- Python 3.10-3.12 on a dev machine with internet, for the one-time downloads below
-
-### 1. Get the pose model (online, once)
-```bash
-pip install ultralytics
-python scripts/export_pose_model.py
-```
-Creates `models/yolo_pose.onnx`. For TensorRT on an NVIDIA GPU:
-```bash
-trtexec --onnx=models/yolo_pose.onnx --saveEngine=models/yolo_pose.engine --fp16
-```
-
-### 2. Cache the embedding model (online, once)
-```bash
-pip install sentence-transformers
-python scripts/download_embedder.py
-```
-
-### 3. Add inputs
-- An exercise video at `data/video/sample_ared.mp4` (or set a camera index as `video_source` in
-  `kinetic_guardian/config.json`).
-- Real, public NASA/CSA protocol documents (PDF, txt or md) in `rag_service/data/protocols/`.
-  The bundled `SAMPLE_placeholder.md` is **not** a real protocol; replace it.
-
-### 4. Start
-```bash
-docker compose up --build
-```
-Open http://localhost:8080 (dashboard). API: http://localhost:8000/services
-
-### 5. Build the protocol index (once, and after changing documents)
-```bash
-docker compose exec rag_service curl -X POST http://localhost:8003/ingest
-```
-
-### 6. Try it
-- Dashboard: watch the skeleton feed, reps and fatigue; upload an image in **Cognitive Triage**.
-- Resilience demo:
-  ```bash
-  docker compose stop kinetic_guardian
-  ```
-  The dashboard shows it as `down`; triage and RAG keep working. Restore with
-  `docker compose start kinetic_guardian`.
-
-### Using a real VLM
-By default `cognitive_triage` uses a **mock** backend that returns a fixed laceration finding, so the full
-pipeline can be demoed without a GPU. **Label mock output as simulated.** To use a real model:
-1. Download Qwen2-VL-2B-Instruct into `models/vlm`.
-2. Set `"backend": "transformers"` in `cognitive_triage/config.json`.
-3. Add `torch transformers accelerate` to `cognitive_triage/requirements.txt` and uncomment the GPU
-   `deploy` lines in `docker-compose.yml`.
-
-This backend is written but has not been run yet.
-
-### Tests
-Unit tests need no Docker, model or GPU:
-```bash
-pip install pytest numpy fastapi httpx
-cd kinetic_guardian && python -m pytest -q    # angles, reps, fatigue, debounce
-cd ../rag_service && python -m pytest -q      # chunking, search, refusal
-cd ../cognitive_triage && python -m pytest -q # VLM output validation
-cd ../gateway && python -m pytest -q          # alert levels, failure isolation
-```
-
-## Configuration
-
-| File | Notable settings |
-|---|---|
-| `kinetic_guardian/config.json` | model path/providers, video source, fatigue window, debounce frames |
-| `cognitive_triage/config.json` | VLM backend/path, allowed conditions, `min_confidence`, disclaimer |
-| `rag_service/config.json` | corpus dir, chunk size/overlap, `top_k`, embedding model |
-| `gateway/config.json` | upstream URLs, alert cooldown |
-
-## Status and limitations
-
-Implemented and unit-tested: pose-metric maths, rep/fatigue logic, alert debounce, RAG chunk/search/refusal,
-VLM output validation, gateway alert levels.
-
-**Not yet run or verified:** Docker build of the whole stack, ONNX pose inference on real video, the real
-embedding model, the Qwen2-VL backend, TensorRT performance.
-
-Known limits: fatigue scoring is a heuristic, not a clinical measure; a small VLM is not clinically
-validated and its confidence is uncalibrated; no space-realistic medical imagery was used; the sleep and
-heart-rate (infrared) monitor is not implemented; the dashboard assumes the gateway at `localhost:8000`;
-`/ingest` rebuilds the whole index.
-
-## Submission
-See `submission/`: `DEMO.md` (video script, slide outline, draft form answers), `AEGIS_slides.pptx`
-(built by `build_slides.js`) and `CHECKLIST.md`.
-
-## AI-assistance disclosure
-Much of this code and documentation was generated with AI assistance (Claude). Mock VLM output is
-simulated. No NASA logos or branding are used.
+Known limitations
+Demo data and illustrative rules only; no clinical validity.
+Data lives in one browser; clearing site data removes it.
+Speech voices depend on the browser and device.
+Tested in desktop and phone widths in a Chromium-based browser; other browsers are untested.
