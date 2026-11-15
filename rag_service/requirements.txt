@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+httpx
+pydantic
+numpy
+faiss-cpu
+sentence-transformers
+pypdf

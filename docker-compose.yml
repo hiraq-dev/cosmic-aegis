@@ -1,0 +1,89 @@
+# C.O.S.M.I.C. AEGIS - isolated, config-driven containers (no shared memory space).
+# ML services sit on an internal network (no internet egress) => fully offline.
+# GPU: uncomment the `deploy` lines (needs NVIDIA Container Toolkit).
+
+x-common: &common
+  restart: unless-stopped
+  security_opt: ["no-new-privileges:true"]
+  read_only: true
+  tmpfs: ["/tmp"]
+  cap_drop: ["ALL"]
+
+services:
+  kinetic_guardian:
+    <<: *common
+    build: { context: ., dockerfile: kinetic_guardian/Dockerfile }
+    volumes:
+      - ./kinetic_guardian/config.json:/app/config.json:ro
+      - ./models:/models:ro
+      - ./data/video:/data:ro
+    networks: [pipeline_net]
+    mem_limit: 2g
+    cpus: 2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    # deploy: { resources: { reservations: { devices: [{ driver: nvidia, count: 1, capabilities: [gpu] }] } } }
+
+  cognitive_triage:
+    <<: *common
+    build: { context: ., dockerfile: cognitive_triage/Dockerfile }
+    volumes:
+      - ./cognitive_triage/config.json:/app/config.json:ro
+      - ./models:/models:ro
+    depends_on:
+      rag_service: { condition: service_healthy }
+    networks: [pipeline_net]
+    mem_limit: 6g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    # deploy: { resources: { reservations: { devices: [{ driver: nvidia, count: 1, capabilities: [gpu] }] } } }
+
+  rag_service:
+    <<: *common
+    build: { context: ., dockerfile: rag_service/Dockerfile }
+    volumes:
+      - ./rag_service/config.json:/app/config.json:ro
+      - ./rag_service/data:/data
+    environment:
+      HF_HOME: /data/hf
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+    networks: [pipeline_net]
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  gateway:
+    <<: *common
+    build: { context: ., dockerfile: gateway/Dockerfile }
+    volumes:
+      - ./gateway/config.json:/app/config.json:ro
+    ports: ["127.0.0.1:8000:8000"]
+    networks: [pipeline_net, ui_net]
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  dashboard:
+    build: { context: ., dockerfile: dashboard/Dockerfile }
+    restart: unless-stopped
+    ports: ["127.0.0.1:8080:8080"]
+    networks: [ui_net]
+    mem_limit: 128m
+
+networks:
+  pipeline_net:
+    internal: true
+  ui_net: {}

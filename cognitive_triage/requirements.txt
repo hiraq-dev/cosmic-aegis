@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+httpx
+pydantic
+numpy
+Pillow
+# For backend "transformers" (real VLM) add: torch transformers accelerate qwen-vl-utils

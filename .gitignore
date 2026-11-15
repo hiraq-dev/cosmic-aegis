@@ -1,0 +1,14 @@
+models/*
+!models/.gitkeep
+/data/
+rag_service/data/index/
+__pycache__/
+.env
+node_modules/
+rag_service/data/hf/
+.native/
+.native_run.log
+.native_err.log
+~$*
+*.docx
+submission/node_modules/

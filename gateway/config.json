@@ -1,0 +1,11 @@
+{
+  "service": "gateway",
+  "port": 8000,
+  "upstream": {
+    "kinetic_guardian": "http://kinetic_guardian:8001",
+    "cognitive_triage": "http://cognitive_triage:8002",
+    "rag_service": "http://rag_service:8003"
+  },
+  "alerting": { "require_agreement": true, "cooldown_seconds": 60 },
+  "health_poll_seconds": 5
+}

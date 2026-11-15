@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>C.O.S.M.I.C. AEGIS</title>
+<style>
+:root{--bg:#1c2125;--panel:#242b30;--teal:#4fd1c5;--txt:#e6edf0;--mut:#8a98a0;--warn:#f6ad55;--crit:#f87171}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:system-ui,sans-serif;margin:0;padding:1.5rem}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+h1{color:var(--teal);font-size:1.3rem;margin:0}
+.badge{padding:.3rem .8rem;border-radius:99px;font-weight:600;border:1px solid var(--teal)}
+.badge.warning{color:var(--warn);border-color:var(--warn)}.badge.critical{color:var(--crit);border-color:var(--crit)}
+.grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.panel{background:var(--panel);border:1px solid #33404a;border-radius:10px;padding:1rem}
+h2{font-size:.9rem;color:var(--teal);margin:0 0 .6rem;text-transform:uppercase;letter-spacing:.05em}
+img{max-width:100%;border-radius:6px;background:#111}
+.row{display:flex;justify-content:space-between;padding:.2rem 0;color:var(--mut)}.row b{color:var(--txt)}
+.down{color:var(--crit)}.ok{color:var(--teal)}
+pre{white-space:pre-wrap;font-size:.8rem;color:var(--txt);margin:.4rem 0 0}
+button{background:var(--teal);color:#0b1417;border:0;border-radius:6px;padding:.5rem 1rem;font-weight:600;cursor:pointer}
+input,textarea{width:100%;background:var(--bg);color:var(--txt);border:1px solid #33404a;border-radius:6px;padding:.4rem;margin:.3rem 0}
+.disc{color:var(--warn);font-size:.8rem;margin-top:.5rem}
+</style></head>
+<body>
+<header><h1>C.O.S.M.I.C. AEGIS &mdash; Mission Control</h1><span id="level" class="badge">...</span></header>
+<div class="grid">
+  <div class="panel"><h2>Kinetic Guardian</h2>
+    <img id="frame" alt="No video feed" height="220">
+    <div id="kin"></div></div>
+  <div class="panel"><h2>Cognitive Triage</h2>
+    <input type="file" id="img" accept="image/*">
+    <textarea id="note" rows="2" placeholder="Optional crew note"></textarea>
+    <button onclick="runTriage()">Analyse</button>
+    <div id="tri"></div></div>
+  <div class="panel"><h2>Systems</h2><div id="svc"></div></div>
+</div>
+<script>
+const API='http://localhost:8000';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const row=(k,v)=>`<div class="row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`;
+async function poll(){
+  try{
+    const o=await (await fetch(API+'/overview')).json();
+    const l=document.getElementById('level');l.textContent=o.level.toUpperCase();l.className='badge '+o.level;
+    const k=o.kinetic,s=k.summary||{};
+    document.getElementById('kin').innerHTML=k.error?row('Status',k.error):
+      row('Reps',s.reps)+row('Fatigue',s.fatigue_score)+row('Form',s.form_ok?'OK':'DEGRADED')+
+      row('FPS',k.fps)+row('Runtime',k.provider||'-')+(k.error?row('Error',k.error):'');
+    document.getElementById('svc').innerHTML=Object.entries(o.services).map(([n,v])=>
+      `<div class="row"><span>${esc(n)}</span><b class="${v==='ok'?'ok':'down'}">${esc(v)}</b></div>`).join('');
+    document.getElementById('frame').src=API+'/kinetic/frame.jpg?'+Date.now();
+  }catch(e){document.getElementById('level').textContent='GATEWAY DOWN';}
+}
+async function runTriage(){
+  const f=document.getElementById('img').files[0];let b64='';
+  if(f){b64=await new Promise(r=>{const x=new FileReader();x.onload=()=>r(x.result.split(',')[1]);x.readAsDataURL(f);});}
+  const el=document.getElementById('tri');el.textContent='Analysing...';
+  const d=await (await fetch(API+'/triage',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({image_b64:b64,note:document.getElementById('note').value})})).json();
+  const s=d.symptoms||{};
+  el.innerHTML=row('Status',d.status)+(s.condition?row('Condition',s.condition+' ('+Math.round((s.confidence||0)*100)+'%)')+row('Severity',s.severity):'')
+    +(d.plan?`<pre>${esc(d.plan.answer)}</pre>`+(d.plan.sources||[]).map(x=>row('['+x.ref+'] '+x.source,'p.'+x.page)).join(''):'')
+    +(d.note?`<pre>${esc(d.note)}</pre>`:'')+(d.error?`<pre>${esc(d.error)}</pre>`:'')
+    +`<div class="disc">${esc(d.disclaimer||'')}</div>`;
+}
+poll();setInterval(poll,1000);
+</script></body></html>

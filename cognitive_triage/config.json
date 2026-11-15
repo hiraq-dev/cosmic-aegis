@@ -1,0 +1,17 @@
+{
+  "service": "cognitive_triage",
+  "port": 8002,
+  "vlm": {
+    "backend": "mock",
+    "path": "/models/vlm",
+    "name": "Qwen2-VL-2B-Instruct (quantized)",
+    "max_new_tokens": 256,
+    "output_format": "json"
+  },
+  "rag_url": "http://rag_service:8003",
+  "conditions": ["laceration", "SANS", "dermal_anomaly", "radiation_skin_reaction"],
+  "safety": {
+    "min_confidence": 0.6,
+    "disclaimer": "Decision support only - not a diagnosis."
+  }
+}

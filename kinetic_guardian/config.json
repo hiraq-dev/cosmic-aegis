@@ -1,0 +1,19 @@
+{
+  "service": "kinetic_guardian",
+  "port": 8001,
+  "model": {
+    "path": "/models/yolo_pose.onnx",
+    "backend": "onnxruntime",
+    "providers": ["TensorrtExecutionProvider", "CUDAExecutionProvider", "CPUExecutionProvider"],
+    "input_size": [640, 640],
+    "conf_threshold": 0.5
+  },
+  "video_source": "/data/sample_ared.mp4",
+  "form_analysis": {
+    "joints": ["knee", "hip", "spine"],
+    "fatigue_window_reps": 5,
+    "form_degradation_threshold": 0.25
+  },
+  "sleep_monitor": { "enabled": false, "ir_source": "/data/sleep_ir.mp4" },
+  "security": { "min_consecutive_frames_for_alert": 5 }
+}
