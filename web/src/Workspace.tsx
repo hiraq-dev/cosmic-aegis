@@ -39,27 +39,6 @@ function Header({ right }: { right?: any }) {
   );
 }
 
-function Auth({ onDone }: { onDone: () => void }) {
-  const [email, setEmail] = useState(""), [pw, setPw] = useState(""), [role, setRole] = useState("crew"), [mode, setMode] = useState<"login" | "register">("login"), [err, setErr] = useState("");
-  const go = async (e: React.FormEvent) => {
-    e.preventDefault(); setErr("");
-    try { const r = await api(`/auth/${mode}`, { method: "POST", json: mode === "login" ? { email, password: pw } : { email, password: pw, role } }); setToken(r.token); onDone(); }
-    catch (x: any) { setErr(typeof x.message === "string" ? x.message : "Request failed"); }
-  };
-  return (
-    <form onSubmit={go} className="mx-auto mt-10 max-w-sm space-y-3 rounded-xl border border-slate-700 bg-slate-900/70 p-5">
-      <h2 className="text-lg font-semibold">{mode === "login" ? "Sign in" : "Create account"}</h2>
-      <input aria-label="Email" className="w-full rounded bg-slate-800 p-2" placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
-      <input aria-label="Password" type="password" className="w-full rounded bg-slate-800 p-2" placeholder="password (10+ characters)" value={pw} onChange={e => setPw(e.target.value)} />
-      {mode === "register" && <select aria-label="Role" className="w-full rounded bg-slate-800 p-2" value={role} onChange={e => setRole(e.target.value)}><option value="crew">Crew member</option><option value="reviewer">Authorized reviewer</option></select>}
-      {err && <p role="alert" className="text-sm text-red-400">{err}</p>}
-      <button className="w-full rounded bg-cyan-500 p-2 font-medium text-slate-950">{mode === "login" ? "Sign in" : "Register"}</button>
-      <button type="button" className="text-sm text-slate-400 underline" onClick={() => setMode(mode === "login" ? "register" : "login")}>{mode === "login" ? "Need an account?" : "Have an account?"}</button>
-      <p className="text-xs text-slate-500">Prototype. Not medical software, not certified, not endorsed by NASA or any space agency.</p>
-    </form>
-  );
-}
-
 function DomainCard({ k, name, ms, cards, children }: any) {
   return (
     <Card title={name}>
@@ -122,9 +101,26 @@ function FamilyCard() {
 export default function Workspace() {
   const [authed, setAuthed] = useState(hasToken());
   const [me, setMe] = useState<any>(null), [cards, setCards] = useState<any>({}), [nasa, setNasa] = useState<any>({}), [notes, setNotes] = useState<any[]>([]), [checkins, setCheckins] = useState<any[]>([]);
-  const [pose, setPose] = useState<any>(null), [hr, setHr] = useState<{ t: number; v: number }[]>([]), [region, setRegion] = useState(""), [ble, setBle] = useState<HrConnection | null>(null), [bleErr, setBleErr] = useState(""), [live, setLive] = useState(false);
+  const [pose, setPose] = useState<any>(null), [hr, setHr] = useState<{ t: number; v: number }[]>([]), [region, setRegion] = useState(""), [ble, setBle] = useState<HrConnection | null>(null), [bleErr, setBleErr] = useState(""), [live, setLive] = useState(false), [backendDown, setBackendDown] = useState(false);
   const [chat, setChat] = useState<any[]>([]), [q, setQ] = useState(""), [astat, setAstat] = useState<any>(null), [pending, setPending] = useState<any[]>([]);
   const dev = useRef("");
+
+  // No login screen: each browser gets its own private anonymous account (credentials kept in this browser only).
+  useEffect(() => {
+    if (authed) return;
+    (async () => {
+      try {
+        let cred: { email: string; password: string } | null = null;
+        try { cred = JSON.parse(localStorage.getItem("aegis-anon") || "null"); } catch { /* none */ }
+        if (cred) { try { const r = await api("/auth/login", { method: "POST", json: cred }); setToken(r.token); setAuthed(true); return; } catch { /* fall through to new account */ } }
+        const id = crypto.randomUUID();
+        cred = { email: `anon-${id}@aegis.local`, password: crypto.randomUUID() + crypto.randomUUID() };
+        const r = await api("/auth/register", { method: "POST", json: { ...cred, role: "crew" } });
+        try { localStorage.setItem("aegis-anon", JSON.stringify(cred)); } catch { /* storage blocked: session only */ }
+        setToken(r.token); setAuthed(true);
+      } catch { setBackendDown(true); }
+    })();
+  }, [authed]);
 
   const refresh = useCallback(async () => {
     try {
@@ -177,7 +173,7 @@ export default function Workspace() {
   };
   const checkin = async (kind: string, payload: any) => { await api("/checkins", { method: "POST", json: { kind, payload } }); refresh(); };
 
-  if (!authed) return <div className="min-h-screen bg-[#070d1f] p-4 text-slate-100"><Header /><Auth onDone={() => setAuthed(true)} /></div>;
+  if (!authed) return <div className="min-h-screen bg-[#070d1f] p-4 text-slate-100"><Header /><p role={backendDown ? "alert" : "status"} className="mx-auto mt-10 max-w-md text-center text-sm text-slate-300">{backendDown ? "The AEGIS backend is not reachable, so nothing can be stored or shown. No data is being invented." : "Setting up your private workspace…"}</p></div>;
 
   const eon = nasa.eonet?.data?.events ?? [], iss = nasa.iss?.data;
   const pins = [...eon.slice(0, 80).map((e: any) => ({ lat: e.lat, lon: e.lon, color: "#f59e0b", label: e.title })), ...(iss && nasa.iss.live ? [{ lat: iss.lat, lon: iss.lon, color: "#22d3ee", label: "ISS (predicted)" }] : [])];
@@ -188,7 +184,7 @@ export default function Workspace() {
         <div className="flex items-center gap-3 text-xs">
           <span aria-live="polite" className={live ? "text-cyan-300" : "text-amber-300"}>{live ? "Server stream connected" : "Server stream not connected"}</span>
           {pending.length > 0 && <span className="text-amber-300">{pending.length} queued, pending send</span>}
-          <button className="underline" onClick={() => { setToken(""); setAuthed(false); }}>Sign out</button>
+          <button className="underline" onClick={() => { setToken(""); try { localStorage.removeItem("aegis-anon"); } catch { /* ignore */ } setAuthed(false); }} title="Forget this browser's workspace">Reset workspace</button>
         </div>} />
       <main className="mx-auto grid max-w-7xl gap-4 p-4 lg:grid-cols-[1fr_1.1fr_1fr]">
         <div className="space-y-3">
