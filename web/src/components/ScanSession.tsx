@@ -55,9 +55,10 @@ export default function ScanSession() {
 
   const getModel = useCallback(async (mode: "VIDEO" | "IMAGE") => {
     if (!landmarkers.current[mode]) {
-      const fs = await FilesetResolver.forVisionTasks(WASM);
+      const timeout = <T,>(p: Promise<T>) => Promise.race([p, new Promise<T>((_, bad) => setTimeout(() => bad(new Error("model timeout")), 45000))]);
+      const fs = await timeout(FilesetResolver.forVisionTasks(WASM));
       const make = (delegate: "GPU" | "CPU") => PoseLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: MODEL, delegate }, runningMode: mode, numPoses: 1 });
-      try { landmarkers.current[mode] = await make("GPU"); } catch { landmarkers.current[mode] = await make("CPU"); }
+      try { landmarkers.current[mode] = await timeout(make("GPU")); } catch { landmarkers.current[mode] = await timeout(make("CPU")); }
     }
     return landmarkers.current[mode]!;
   }, []);
