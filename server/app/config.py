@@ -25,6 +25,10 @@ class Settings:
     default_stale_seconds: int = 300
 
     def validate(self) -> None:
+        # hosts hand out postgres:// or postgresql:// URLs; SQLAlchemy needs the psycopg driver named
+        for prefix in ("postgres://", "postgresql://"):
+            if self.database_url.startswith(prefix):
+                self.database_url = "postgresql+psycopg://" + self.database_url[len(prefix):]
         if self.env == "production" and (len(self.jwt_secret) < 32 or self.jwt_secret.startswith("change-me")):
             raise RuntimeError("JWT_SECRET must be a random string of at least 32 characters in production")
         if not self.jwt_secret:

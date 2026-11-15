@@ -1,0 +1,23 @@
+# Render blueprint: Postgres + the API. One worker only (SSE fan-out is in-process).
+databases:
+  - name: aegis-db
+    plan: free
+services:
+  - type: web
+    name: aegis-api
+    runtime: docker
+    dockerfilePath: ./server.Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /ready
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: { name: aegis-db, property: connectionString }
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://cosmic-aegis-beryl.vercel.app
+      - key: NASA_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
