@@ -3,7 +3,7 @@
 Challenge: **Create Health Monitoring Software for Astronauts on Space Missions**
 https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/
 
-Replace `[TEAM NAME]` with your real team name before submitting. Check the official Space Apps site for current field names, limits and the deadline. Both texts below say plainly that all data is simulated, so do not edit that out.
+Team: Team AEGIS (Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar Mani Kandan). Use your registered Space Apps team name if it differs. Check the official Space Apps site for current field names, limits and the deadline. Both texts below say plainly that all data is simulated, so do not edit that out.
 
 A team normally submits **one project**. AEGIS is the stronger primary entry (three focused modules, a 7-slide deck, sources page). ASTRA CARE is a second, broader prototype; submit it only if the rules allow a second entry, or mention it as a related demo in the AEGIS details.
 
@@ -75,7 +75,7 @@ The website's code, text and graphics were created with AI assistance (Claude by
 
 ## Submission checklist
 
-- [ ] Replace `[TEAM NAME]` (and the "Team AEGIS" / "Your team name here" placeholders on both sites, then redeploy by pushing to GitHub)
+- [ ] Confirm the team name matches your Space Apps registration (sites currently say "Team AEGIS" plus the three member names)
 - [ ] Open both live URLs in a private window (no login needed) on a phone and a laptop
 - [ ] Open `AEGIS_SpaceApps_7slides.pptx` in PowerPoint and check every slide (layout was not visually verified)
 - [ ] Upload the deck as PDF if the form asks for slides; confirm it is 7 slides or fewer

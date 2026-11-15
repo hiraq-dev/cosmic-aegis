@@ -13,7 +13,7 @@ const AI = "AI-generated / AI-assisted";
 
 const slides = [
   { title: "C.O.S.M.I.C. AEGIS", sub: "Understand Your Health Beyond Earth",
-    bullets: ["A prototype health-awareness website for astronauts on long space missions", "NASA Space Apps Challenge 2026: Create Health Monitoring Software for Astronauts on Space Missions", `${TEAM}  |  Demo data only, not a medical device`],
+    bullets: ["A prototype health-awareness website for astronauts on long space missions", "NASA Space Apps Challenge 2026: Create Health Monitoring Software for Astronauts on Space Missions", `${TEAM}: Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar Mani Kandan  |  Demo data only, not a medical device`],
     images: [{ f: "c_hero.png", cap: `${AI} illustration (original artwork)` }, { f: "c_modules.png", cap: "Real screenshot of the prototype dashboard (demo data)" }] },
   { title: "The human challenge", sub: "Far from Earth, the body and mind change",
     bullets: ["NASA's Human Research Program names five hazards of spaceflight: radiation, isolation and confinement, distance from Earth, gravity fields, and hostile closed environments.", "Muscles and bones lose load, sleep and stress shift, and the cardiovascular system adapts.", "With long communication delays, astronauts need clear, calm self-awareness tools and good information to share with their medical team.", "Source: nasa.gov/hrp/hazards"],
@@ -30,7 +30,7 @@ const slides = [
     bullets: ["React, TypeScript, Vite, Tailwind CSS, Recharts, Lucide icons; deployed as a static site.", "Referenced (no datasets or APIs connected): NASA HRP hazards and risks pages, ongoing HRP research, two NASA NTRS evidence reports, two Canadian Space Agency articles.", "Integration points ready for computer vision, ML analysis and wearables (src/integrations).", "Space health is a global effort: NASA, CSA, ESA and others share research. Not affiliated with or endorsed by NASA or CSA.", "Code, text and art created with AI assistance (Claude by Anthropic)."],
     images: [] },
   { title: "Health beyond Earth starts with awareness", sub: "Calm information, early, for every crew member",
-    bullets: [`Team: ${TEAM}`, `Website: ${liveText}`, `GitHub: ${REPO}`, "QR code: live website", "All data shown is illustrative demo data."],
+    bullets: [`Team: ${TEAM} - Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar Mani Kandan`, `Website: ${liveText}`, `GitHub: ${REPO}`, "QR code: live website", "All data shown is illustrative demo data."],
     images: [{ f: "c_hero.png", cap: "Real screenshot of the prototype" }, { f: "qr_repo.png", cap: "Scan: live site", qr: true }] },
 ];
 

@@ -1,5 +1,5 @@
 import { BookOpen, ExternalLink } from "lucide-react";
-import { CHALLENGE_URL, REPO_URL, SOURCES, TEAM_NAME } from "../lib/team";
+import { CHALLENGE_URL, REPO_URL, SOURCES, TEAM_MEMBERS, TEAM_NAME } from "../lib/team";
 import { DemoBadge, Disclaimer, Panel } from "../components/ui";
 
 export default function Sources() {
@@ -10,7 +10,7 @@ export default function Sources() {
           <BookOpen className="text-aegis-cyan" aria-hidden="true" /> Sources &amp; prototype status
         </h1>
         <p className="mt-1 max-w-3xl text-slate-300">
-          Built by {TEAM_NAME} for the{" "}
+          Built by {TEAM_NAME} ({TEAM_MEMBERS}) for the{" "}
           <a className="text-aegis-cyan underline" href={CHALLENGE_URL} target="_blank" rel="noreferrer">
             2026 NASA Space Apps Challenge: Create Health Monitoring Software for Astronauts on Space Missions
           </a>

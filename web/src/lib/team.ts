@@ -1,5 +1,6 @@
 // Edit these in one place. Used in the footer and presentation.
 export const TEAM_NAME = "Team AEGIS";
+export const TEAM_MEMBERS = "Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar Mani Kandan";
 export const REPO_URL = "https://github.com/hiraq-dev/cosmic-aegis";
 export const CHALLENGE_URL = "https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/";
 

@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { Activity, BookOpen, Brain, Dumbbell, HeartPulse, LayoutDashboard, Menu, RotateCcw, User, X } from "lucide-react";
 import { Logo, btnGhost } from "./ui";
 import { useStore } from "../lib/store";
-import { REPO_URL, TEAM_NAME } from "../lib/team";
+import { REPO_URL, TEAM_MEMBERS, TEAM_NAME } from "../lib/team";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -68,7 +68,7 @@ export default function Layout() {
         <div className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-2xl">
             <Activity size={12} className="mr-1 inline" aria-hidden="true" />
-            {TEAM_NAME} - NASA Space Apps Challenge 2026 prototype. Demo data only, not a medical device. Not affiliated with or endorsed by NASA. Code and visuals created with AI assistance.{" "}
+            {TEAM_NAME} ({TEAM_MEMBERS}) - NASA Space Apps Challenge 2026 prototype. Demo data only, not a medical device. Not affiliated with or endorsed by NASA. Code and visuals created with AI assistance.{" "}
             <a className="underline hover:text-aegis-cyan" href={REPO_URL} target="_blank" rel="noreferrer">
               Source on GitHub
             </a>
