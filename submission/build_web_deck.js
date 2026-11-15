@@ -30,8 +30,8 @@ const slides = [
     bullets: ["React, TypeScript, Vite, Tailwind CSS, Recharts, Lucide icons; deployed as a static site.", "Referenced (no datasets or APIs connected): NASA HRP hazards and risks pages, ongoing HRP research, two NASA NTRS evidence reports, two Canadian Space Agency articles.", "Integration points ready for computer vision, ML analysis and wearables (src/integrations).", "Space health is a global effort: NASA, CSA, ESA and others share research. Not affiliated with or endorsed by NASA or CSA.", "Code, text and art created with AI assistance (Claude by Anthropic)."],
     images: [] },
   { title: "Health beyond Earth starts with awareness", sub: "Calm information, early, for every crew member",
-    bullets: [`Team: ${TEAM}`, `Website: ${liveText}`, `GitHub: ${REPO}`, "QR code: GitHub repository", "All data shown is illustrative demo data."],
-    images: [{ f: "c_hero.png", cap: "Real screenshot of the prototype" }, { f: "qr_repo.png", cap: "Scan: GitHub repo", qr: true }] },
+    bullets: [`Team: ${TEAM}`, `Website: ${liveText}`, `GitHub: ${REPO}`, "QR code: live website", "All data shown is illustrative demo data."],
+    images: [{ f: "c_hero.png", cap: "Real screenshot of the prototype" }, { f: "qr_repo.png", cap: "Scan: live site", qr: true }] },
 ];
 
 // ---------- PPTX ----------
