@@ -1,5 +1,9 @@
 # C.O.S.M.I.C. AEGIS
 
+> **New: website prototype in [`web/`](web/README.md)** - "Understand Your Health Beyond Earth": a frontend-only
+> demo with Mental Health, Musculoskeletal and Cardiovascular modules (demo data, not a medical device).
+> Run: `cd web && npm install && npm run dev`. The text below describes the earlier Python edge-AI backend prototype.
+
 **Cottbus Orbital Software for Medical Informatics & Care - Aerospace Edge-Guardian for Informatics & Security**
 
 An offline, containerised, dual-pipeline edge-AI prototype that monitors astronaut health and suggests

@@ -1,0 +1,11 @@
+node_modules
+dist
+*.local
+.vercel
+shots/raw_*
+shots/_*
+shots/dashboard.png
+shots/mental.png
+shots/musculoskeletal.png
+shots/cardiovascular.png
+shots/profile.png
