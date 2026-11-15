@@ -1,20 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Globe2, Orbit, RefreshCw, Satellite, Sun } from "lucide-react";
+import { Crosshair, Download, Globe2, Orbit, RefreshCw, Satellite, Save, Sun, Trash2 } from "lucide-react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
-import { feature } from "topojson-client";
-import land110 from "world-atlas/land-110m.json";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { DemoBadge, Panel } from "../components/ui";
+import { deleteSnapshot, download, listSnapshots, saveSnapshot, type Snapshot } from "../lib/history";
 
 // LIVE MISSION CONTROL. Real, public, keyless data fetched in the browser:
-//  - ISS position, altitude, velocity and ground track: api.wheretheiss.at (open ISS tracker)
+//  - Satellite imagery: NASA GIBS (Global Imagery Browse Services), MODIS true colour from yesterday, VIIRS night lights
 //  - Natural events with coordinates: NASA EONET (eonet.gsfc.nasa.gov)
+//  - ISS position, altitude, velocity and ground track: api.wheretheiss.at (open ISS tracker)
 //  - Space-weather scales and Kp index: NOAA SWPC (services.swpc.noaa.gov)
 // The South Atlantic Anomaly outline is an APPROXIMATE educational region, not a measured boundary.
-
-const W = 1000, H = 500;
-const px = (lon: number) => ((lon + 180) / 360) * W;
-const py = (lat: number) => ((90 - lat) / 180) * H;
 
 interface Iss { latitude: number; longitude: number; altitude: number; velocity: number; visibility: string; footprint: number; timestamp: number }
 interface TrackPt { lat: number; lon: number; t: number }
@@ -22,31 +20,35 @@ interface Eonet { id: string; title: string; cat: string; lat: number; lon: numb
 interface Scales { R: string; S: string; G: string }
 interface KpPt { t: string; kp: number }
 
-// Approximate SAA ellipse (centre, semi-axes in degrees).
 const SAA = { lat: -26, lon: -50, rLat: 24, rLon: 40 };
 const inSaa = (lat: number, lon: number) => ((lat - SAA.lat) / SAA.rLat) ** 2 + ((lon - SAA.lon) / SAA.rLon) ** 2 <= 1;
+const saaPolygon = (): L.LatLngTuple[] =>
+  Array.from({ length: 72 }, (_, i) => {
+    const a = (i / 72) * Math.PI * 2;
+    return [SAA.lat + SAA.rLat * Math.sin(a), SAA.lon + SAA.rLon * Math.cos(a)] as L.LatLngTuple;
+  });
 
 const CAT_COLOR: Record<string, string> = { Wildfires: "#ff6b3d", Volcanoes: "#ff2a55", "Severe Storms": "#38bdf8", "Sea and Lake Ice": "#a5f3fc", Floods: "#3b82f6", Earthquakes: "#ffb020", Drought: "#d4a373", Landslides: "#a78bfa", "Dust and Haze": "#c2a878", "Temperature Extremes": "#f472b6", "Water Color": "#34d399", Snow: "#e2e8f0", Manmade: "#94a3b8" };
 
-function landPath(): string {
-  const f: any = feature(land110 as any, (land110 as any).objects.land);
-  const rings: number[][][] = [];
-  const geoms = f.type === "FeatureCollection" ? f.features.map((x: any) => x.geometry) : [f.geometry ?? f];
-  for (const g of geoms) {
-    const polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
-    for (const p of polys) for (const ring of p) rings.push(ring);
-  }
-  return rings.map((r) => r.map(([lo, la], i) => `${i === 0 || Math.abs(lo - r[i - 1][0]) > 180 ? "M" : "L"}${px(lo).toFixed(1)},${py(la).toFixed(1)}`).join("")).join("");
-}
+const GIBS = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best";
+const yesterday = () => new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+const BASEMAPS = {
+  truecolor: { label: "True colour (MODIS)", url: () => `${GIBS}/MODIS_Terra_CorrectedReflectance_TrueColor/default/${yesterday()}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`, max: 9 },
+  night: { label: "Night lights (VIIRS)", url: () => `${GIBS}/VIIRS_Black_Marble/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png`, max: 8 },
+  marble: { label: "Blue Marble relief", url: () => `${GIBS}/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg`, max: 8 },
+} as const;
+type BaseKey = keyof typeof BASEMAPS;
 
-// Split a track into segments so the line does not cross the whole map at the antimeridian.
-function trackPath(pts: TrackPt[]): string {
-  let d = "";
+// Split a track where it crosses the antimeridian so no line is drawn across the whole map.
+function segments(pts: TrackPt[]): L.LatLngTuple[][] {
+  const out: L.LatLngTuple[][] = [];
+  let cur: L.LatLngTuple[] = [];
   pts.forEach((p, i) => {
-    const wrap = i > 0 && Math.abs(p.lon - pts[i - 1].lon) > 180;
-    d += `${i === 0 || wrap ? "M" : "L"}${px(p.lon).toFixed(1)},${py(p.lat).toFixed(1)}`;
+    if (i > 0 && Math.abs(p.lon - pts[i - 1].lon) > 180) { out.push(cur); cur = []; }
+    cur.push([p.lat, p.lon]);
   });
-  return d;
+  if (cur.length) out.push(cur);
+  return out;
 }
 
 async function j<T>(url: string): Promise<T> {
@@ -62,26 +64,59 @@ export default function LiveMission() {
   const [scales, setScales] = useState<Scales | null>(null);
   const [kp, setKp] = useState<KpPt[]>([]);
   const [err, setErr] = useState<string[]>([]);
-  const [sel, setSel] = useState<Eonet | null>(null);
-  const [updated, setUpdated] = useState<number>(0);
-  const issAlive = useRef(true);
-  const land = useMemo(landPath, []);
+  const [updated, setUpdated] = useState(0);
+  const [base, setBase] = useState<BaseKey>("truecolor");
+  const [follow, setFollow] = useState(false);
+  const [snaps, setSnaps] = useState<Snapshot[]>(() => listSnapshots());
+  const [savedMsg, setSavedMsg] = useState("");
+
+  const mapEl = useRef<HTMLDivElement>(null);
+  const map = useRef<L.Map | null>(null);
+  const baseLayer = useRef<L.TileLayer | null>(null);
+  const issMarker = useRef<L.Marker | null>(null);
+  const footprint = useRef<L.Circle | null>(null);
+  const trackLayer = useRef<L.LayerGroup | null>(null);
+  const eventLayer = useRef<L.LayerGroup | null>(null);
+  const followRef = useRef(false);
+  followRef.current = follow;
 
   const fail = (k: string) => setErr((e) => (e.includes(k) ? e : [...e, k]));
 
-  // ISS position every 5 s
+  // ---- map setup (once) ---------------------------------------------------------------------------------------
   useEffect(() => {
-    issAlive.current = true;
+    if (!mapEl.current || map.current) return;
+    const m = L.map(mapEl.current, { center: [15, 10], zoom: 2, minZoom: 2, maxZoom: 9, worldCopyJump: true, zoomSnap: 0.5 });
+    m.attributionControl.setPrefix(false);
+    map.current = m;
+    L.polygon(saaPolygon(), { color: "#ff2a55", weight: 1.5, dashArray: "6 5", fillColor: "#ff2a55", fillOpacity: 0.18 }).addTo(m).bindTooltip("South Atlantic Anomaly (approximate): higher charged-particle flux", { sticky: true });
+    trackLayer.current = L.layerGroup().addTo(m);
+    eventLayer.current = L.layerGroup().addTo(m);
+    setTimeout(() => m.invalidateSize(), 200);
+    return () => { m.remove(); map.current = null; issMarker.current = null; footprint.current = null; };
+  }, []);
+
+  // base layer (NASA GIBS)
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    baseLayer.current?.remove();
+    const b = BASEMAPS[base];
+    baseLayer.current = L.tileLayer(b.url(), { maxNativeZoom: b.max, maxZoom: 9, minZoom: 2, attribution: "Imagery: NASA GIBS / EOSDIS" }).addTo(m);
+    baseLayer.current.bringToBack();
+  }, [base]);
+
+  // ---- data ---------------------------------------------------------------------------------------------------
+  useEffect(() => {
+    let alive = true;
     const tick = () =>
       j<Iss>("https://api.wheretheiss.at/v1/satellites/25544")
-        .then((d) => { if (issAlive.current) { setIss(d); setUpdated(Date.now()); setErr((e) => e.filter((x) => x !== "ISS")); } })
+        .then((d) => { if (alive) { setIss(d); setUpdated(Date.now()); setErr((e) => e.filter((x) => x !== "ISS")); } })
         .catch(() => fail("ISS"));
     tick();
     const id = setInterval(tick, 5000);
-    return () => { issAlive.current = false; clearInterval(id); };
+    return () => { alive = false; clearInterval(id); };
   }, []);
 
-  // ground track: 10 past + 10 future points at 5-minute spacing (two requests of 10)
   useEffect(() => {
     const now = Math.floor(Date.now() / 1000);
     const ts = Array.from({ length: 20 }, (_, i) => now + (i - 8) * 360);
@@ -90,9 +125,8 @@ export default function LiveMission() {
       .catch(() => fail("track"));
   }, []);
 
-  // NASA EONET
   useEffect(() => {
-    j<any>("https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=120")
+    j<any>("https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=150")
       .then((d) =>
         setEvents(
           d.events
@@ -107,32 +141,78 @@ export default function LiveMission() {
       .catch(() => fail("EONET"));
   }, []);
 
-  // NOAA SWPC scales + Kp, refresh every 2 min
   useEffect(() => {
     const go = () => {
-      j<any>("https://services.swpc.noaa.gov/products/noaa-scales.json")
-        .then((d) => setScales({ R: d["0"].R.Scale, S: d["0"].S.Scale, G: d["0"].G.Scale }))
-        .catch(() => fail("SWPC scales"));
-      j<any[]>("https://services.swpc.noaa.gov/json/planetary_k_index_1m.json")
-        .then((d) => setKp(d.filter((_, i) => i % 6 === 0).slice(-60).map((x) => ({ t: x.time_tag, kp: x.estimated_kp }))))
-        .catch(() => fail("SWPC Kp"));
+      j<any>("https://services.swpc.noaa.gov/products/noaa-scales.json").then((d) => setScales({ R: d["0"].R.Scale, S: d["0"].S.Scale, G: d["0"].G.Scale })).catch(() => fail("SWPC scales"));
+      j<any[]>("https://services.swpc.noaa.gov/json/planetary_k_index_1m.json").then((d) => setKp(d.filter((_, i) => i % 6 === 0).slice(-60).map((x) => ({ t: x.time_tag, kp: x.estimated_kp })))).catch(() => fail("SWPC Kp"));
     };
     go();
     const id = setInterval(go, 120000);
     return () => clearInterval(id);
   }, []);
 
+  // ---- draw dynamic layers ------------------------------------------------------------------------------------
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !iss) return;
+    const ll: L.LatLngTuple = [iss.latitude, iss.longitude];
+    if (!issMarker.current) {
+      issMarker.current = L.marker(ll, {
+        icon: L.divIcon({ className: "", html: '<div class="iss-pulse"><span>ISS</span></div>', iconSize: [34, 34], iconAnchor: [17, 17] }),
+        zIndexOffset: 1000,
+      }).addTo(m);
+      footprint.current = L.circle(ll, { radius: (iss.footprint / 2) * 1000, color: "#00f0ff", weight: 1, fillColor: "#00f0ff", fillOpacity: 0.07 }).addTo(m);
+    } else {
+      issMarker.current.setLatLng(ll);
+      footprint.current?.setLatLng(ll).setRadius((iss.footprint / 2) * 1000);
+    }
+    if (followRef.current) m.panTo(ll, { animate: true });
+  }, [iss]);
+
+  useEffect(() => {
+    const g = trackLayer.current;
+    if (!g) return;
+    g.clearLayers();
+    const nowS = Math.floor(Date.now() / 1000);
+    const past = track.filter((p) => p.t <= nowS), fut = track.filter((p) => p.t > nowS);
+    segments(past).forEach((s) => L.polyline(s, { color: "#a78bfa", weight: 3, opacity: 0.85 }).addTo(g));
+    segments([...past.slice(-1), ...fut]).forEach((s) => L.polyline(s, { color: "#00f0ff", weight: 3, dashArray: "8 7", opacity: 0.95 }).addTo(g));
+  }, [track]);
+
+  useEffect(() => {
+    const g = eventLayer.current;
+    if (!g) return;
+    g.clearLayers();
+    events.forEach((e) => {
+      const c = CAT_COLOR[e.cat] ?? "#94a3b8";
+      L.circleMarker([e.lat, e.lon], { radius: 6, color: "#000", weight: 1, fillColor: c, fillOpacity: 0.9 })
+        .bindPopup(`<strong style="color:${c}">${e.cat}</strong><br/>${e.title}<br/><small>${e.lat.toFixed(2)}, ${e.lon.toFixed(2)} &middot; ${e.date.slice(0, 10)}</small><br/><a href="${e.link}" target="_blank" rel="noreferrer">NASA EONET record</a>`)
+        .addTo(g);
+    });
+  }, [events]);
+
+  // ---- derived ------------------------------------------------------------------------------------------------
   const inside = iss ? inSaa(iss.latitude, iss.longitude) : false;
   const nextSaa = useMemo(() => {
     if (!iss || !track.length) return null;
     const nowS = Math.floor(Date.now() / 1000);
-    const fut = track.filter((p) => p.t > nowS);
-    const hit = fut.find((p) => inSaa(p.lat, p.lon));
+    const hit = track.filter((p) => p.t > nowS).find((p) => inSaa(p.lat, p.lon));
     return hit ? Math.max(1, Math.round((hit.t - nowS) / 60)) : null;
   }, [iss, track]);
-  const past = track.filter((p) => p.t <= Math.floor(Date.now() / 1000));
-  const fut = track.filter((p) => p.t > Math.floor(Date.now() / 1000));
   const lastKp = kp.length ? kp[kp.length - 1].kp : null;
+  const byCat = useMemo(() => events.reduce<Record<string, number>>((a, e) => ((a[e.cat] = (a[e.cat] ?? 0) + 1), a), {}), [events]);
+
+  const snapshot = () => {
+    const s: Snapshot = {
+      id: "SNAP-" + Math.random().toString(16).slice(2, 7).toUpperCase(),
+      when: new Date().toISOString(),
+      iss: iss ? { lat: iss.latitude, lon: iss.longitude, altKm: Math.round(iss.altitude), speedKmh: Math.round(iss.velocity) } : undefined,
+      scales: scales ?? undefined, kp: lastKp, eonetCount: events.length, eonetByCategory: byCat,
+    };
+    setSnaps(saveSnapshot(s));
+    setSavedMsg("Snapshot saved in this browser.");
+    setTimeout(() => setSavedMsg(""), 2500);
+  };
 
   const scaleCell = (label: string, hint: string, v: string | undefined) => {
     const n = Number(v ?? 0);
@@ -151,47 +231,28 @@ export default function LiveMission() {
         <div className="hud-mono text-[10px] tracking-widest text-hud-emerald">LIVE MISSION CONTROL</div>
         <h1 className="font-display mt-1 text-2xl font-extrabold text-white sm:text-3xl">The environment your crew is flying through, right now</h1>
         <p className="mt-2 max-w-3xl text-sm text-slate-300">
-          Real data fetched live in your browser: ISS position and orbit, open natural events on Earth from NASA EONET, and space-weather conditions from NOAA SWPC. It shows the radiation and orbital context that drives crew health. Your health entries stay simulated.{" "}
-          <Link to="/scan" className="text-aegis-cyan underline">Try the live body scan</Link>
+          Real data fetched live in your browser: NASA satellite imagery (GIBS), open natural events from NASA EONET, the ISS position and orbit, and space-weather conditions from NOAA. Zoom, pan and click the map. Your health entries stay simulated.{" "}
+          <Link to="/" className="text-aegis-cyan underline">Back to the body scan</Link>
         </p>
       </header>
 
-      <Panel title="Live orbit map" icon={<Globe2 size={16} aria-hidden="true" />} action={<DemoBadge text="LIVE DATA" />}>
-        <div className="overflow-hidden rounded-lg border border-cyan-400/20 bg-[#050a18]">
-          <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label="World map with the live ISS position, ground track, South Atlantic Anomaly region and open NASA EONET events">
-            {[-60, -30, 0, 30, 60].map((la) => <line key={la} x1="0" x2={W} y1={py(la)} y2={py(la)} stroke="rgba(0,240,255,.08)" />)}
-            {[-150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150].map((lo) => <line key={lo} y1="0" y2={H} x1={px(lo)} x2={px(lo)} stroke="rgba(0,240,255,.08)" />)}
-            <path d={land} fill="rgba(56,189,248,.16)" stroke="rgba(56,189,248,.5)" strokeWidth=".6" />
-            <ellipse cx={px(SAA.lon)} cy={py(SAA.lat)} rx={(SAA.rLon / 360) * W} ry={(SAA.rLat / 180) * H} fill="rgba(255,42,85,.18)" stroke="#ff2a55" strokeDasharray="5 4" />
-            <text x={px(SAA.lon)} y={py(SAA.lat) + 4} textAnchor="middle" fontSize="11" fill="#ff8aa3" className="hud-mono">SAA (approx.)</text>
-            {events.map((e) => (
-              <circle key={e.id} cx={px(e.lon)} cy={py(e.lat)} r={sel?.id === e.id ? 6 : 3.2} fill={CAT_COLOR[e.cat] ?? "#94a3b8"} fillOpacity=".9" stroke="#000" strokeWidth=".4" style={{ cursor: "pointer" }} onClick={() => setSel(e)}>
-                <title>{e.title}</title>
-              </circle>
-            ))}
-            {past.length > 1 && <path d={trackPath(past)} fill="none" stroke="#a78bfa" strokeWidth="1.6" strokeOpacity=".7" />}
-            {fut.length > 1 && <path d={trackPath([...(past.slice(-1)), ...fut])} fill="none" stroke="#00f0ff" strokeWidth="1.6" strokeDasharray="6 5" />}
-            {iss && (
-              <g transform={`translate(${px(iss.longitude)} ${py(iss.latitude)})`}>
-                <circle r="22" fill="none" stroke="#00f0ff" strokeOpacity=".5"><animate attributeName="r" values="8;28;8" dur="2.4s" repeatCount="indefinite" /><animate attributeName="stroke-opacity" values=".8;0;.8" dur="2.4s" repeatCount="indefinite" /></circle>
-                <circle r="5.5" fill="#fff" stroke="#00f0ff" strokeWidth="2" />
-                <text y="-12" textAnchor="middle" fontSize="12" fontWeight="700" fill="#fff" className="hud-mono">ISS</text>
-              </g>
-            )}
-          </svg>
+      <Panel title="Live orbit map (NASA imagery, zoom and pan)" icon={<Globe2 size={16} aria-hidden="true" />} action={<DemoBadge text="LIVE NASA DATA" />}>
+        <div className="mb-2 flex flex-wrap items-center gap-2" role="group" aria-label="Map layer">
+          {(Object.keys(BASEMAPS) as BaseKey[]).map((k) => (
+            <button key={k} onClick={() => setBase(k)} aria-pressed={base === k} className={`rounded-md border px-2.5 py-1 text-xs ${base === k ? "border-aegis-cyan bg-aegis-cyan/15 text-white" : "border-white/15 text-slate-300 hover:bg-white/5"}`}>{BASEMAPS[k].label}</button>
+          ))}
+          <button onClick={() => setFollow((f) => !f)} aria-pressed={follow} className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs ${follow ? "border-emerald-400 bg-emerald-400/15 text-white" : "border-white/15 text-slate-300 hover:bg-white/5"}`}><Crosshair size={12} aria-hidden="true" /> Follow ISS</button>
+          <button onClick={() => { setFollow(false); map.current?.setView([15, 10], 2); }} className="rounded-md border border-white/15 px-2.5 py-1 text-xs text-slate-300 hover:bg-white/5">Reset view</button>
+          {iss && <button onClick={() => { setFollow(false); map.current?.setView([iss.latitude, iss.longitude], 5); }} className="rounded-md border border-white/15 px-2.5 py-1 text-xs text-slate-300 hover:bg-white/5">Zoom to ISS</button>}
         </div>
+        <div ref={mapEl} className="h-[460px] w-full overflow-hidden rounded-lg border border-cyan-400/25 bg-[#050a18]" role="application" aria-label="Interactive world map with the live ISS position, orbit, South Atlantic Anomaly and open NASA EONET events" />
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-400">
           <span><span className="text-[#a78bfa]">&#9473;</span> past 50 min</span>
           <span><span className="text-aegis-cyan">&#9548;</span> next 60 min</span>
           <span><span className="text-[#ff2a55]">&#9711;</span> South Atlantic Anomaly (approximate)</span>
-          <span>dots: open NASA EONET events ({events.length})</span>
+          <span>dots: {events.length} open NASA EONET events (click for details)</span>
+          <span>scroll or pinch to zoom, drag to pan</span>
         </div>
-        {sel && (
-          <p className="mt-2 rounded-md border border-white/10 bg-white/5 p-2 text-xs text-slate-200">
-            <strong style={{ color: CAT_COLOR[sel.cat] ?? "#fff" }}>{sel.cat}</strong>: {sel.title} ({sel.lat.toFixed(2)}, {sel.lon.toFixed(2)}), {sel.date.slice(0, 10)}.{" "}
-            <a className="text-aegis-cyan underline" href={sel.link} target="_blank" rel="noreferrer">NASA EONET record</a>
-          </p>
-        )}
         {err.length > 0 && <p className="mt-2 text-xs text-amber-200" role="status">Could not reach: {err.join(", ")}. Other feeds still work. <button className="underline" onClick={() => location.reload()}>Retry</button></p>}
       </Panel>
 
@@ -248,12 +309,31 @@ export default function LiveMission() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <p className="mt-2 text-xs text-slate-300">
-            S-scale tracks solar radiation storms that matter most for astronaut dose; G-scale and Kp show geomagnetic disturbance. Scales run 0 (none) to 5 (extreme).
-          </p>
-          <p className="mt-1 text-[11px] text-slate-400 flex items-center gap-1"><RefreshCw size={10} aria-hidden="true" /> Source: NOAA Space Weather Prediction Center, refreshed every 2 minutes. Awareness only.</p>
+          <p className="mt-2 text-xs text-slate-300">S-scale tracks solar radiation storms that matter most for astronaut dose; G-scale and Kp show geomagnetic disturbance. Scales run 0 (none) to 5 (extreme).</p>
+          <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-400"><RefreshCw size={10} aria-hidden="true" /> Source: NOAA Space Weather Prediction Center, refreshed every 2 minutes. Awareness only.</p>
         </Panel>
       </div>
+
+      <Panel title="Saved environment snapshots" icon={<Save size={16} aria-hidden="true" />} action={<DemoBadge text="STORED IN YOUR BROWSER" />}>
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={snapshot} className="inline-flex items-center gap-2 rounded-lg border border-aegis-cyan bg-aegis-cyan/15 px-4 py-2 text-sm font-semibold text-white"><Save size={15} aria-hidden="true" /> Save snapshot now</button>
+          {snaps.length > 0 && <button onClick={() => download("aegis-snapshots.json", JSON.stringify(snaps, null, 2))} className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm text-slate-200 hover:bg-white/5"><Download size={15} aria-hidden="true" /> Export JSON</button>}
+          {savedMsg && <span className="text-sm text-hud-emerald" role="status">{savedMsg}</span>}
+        </div>
+        {snaps.length === 0 ? (
+          <p className="mt-3 text-sm text-slate-400">Save a record of the ISS position, space-weather scales and open NASA events at this moment, to compare later.</p>
+        ) : (
+          <ul className="mt-3 space-y-1.5 text-xs">
+            {snaps.slice(0, 8).map((s) => (
+              <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-slate-200">
+                <span className="hud-mono text-slate-400">{new Date(s.when).toLocaleString()}</span>
+                <span>ISS {s.iss ? `${s.iss.lat.toFixed(1)}, ${s.iss.lon.toFixed(1)}` : "n/a"} &middot; S{s.scales?.S ?? "-"} G{s.scales?.G ?? "-"} R{s.scales?.R ?? "-"} &middot; Kp {typeof s.kp === "number" ? s.kp.toFixed(1) : "-"} &middot; {s.eonetCount ?? 0} events</span>
+                <button onClick={() => setSnaps(deleteSnapshot(s.id))} aria-label={`Delete snapshot ${s.id}`} className="text-slate-400 hover:text-red-300"><Trash2 size={14} /></button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Panel>
     </div>
   );
 }

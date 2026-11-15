@@ -79,7 +79,7 @@ export default function Sources() {
 
       <Panel title="AI assistance and attribution">
         <p className="text-sm text-slate-300">
-          This website's code, text and illustrations were created with AI assistance (Claude by Anthropic). The astronaut illustration is original AI-assisted vector artwork and contains no NASA or other agency logos, flags or insignia. Source code:{" "}
+          This website's code, text and illustrations were created with AI assistance (Claude by Anthropic). Source code:{" "}
           <a className="text-aegis-cyan underline" href={REPO_URL} target="_blank" rel="noreferrer">
             {REPO_URL}
           </a>

@@ -45,9 +45,11 @@ design also includes delay-tolerant messaging and SOS rehearsal.
 
 ## Features
 
-The site opens on the **Dashboard**, which begins with a 30-second animated, narrated story.
+The site opens on the **Dashboard**: the 30-second narrated story is first, then an interactive body-scan session, then the data panels.
 
-- **Live orbit (`/live`), real-time data with coordinates:** the ISS position, altitude, speed and orbit track updated every 5 seconds on a world map, open **NASA EONET** natural events plotted by latitude and longitude, the South Atlantic Anomaly radiation region (approximate) with a countdown to the next pass, and live **NOAA SWPC** radiation-storm (S), geomagnetic (G) and radio-blackout (R) scales with the Kp index.
+- **Interactive body scan and report (home page):** open the camera, stand in frame and the app scans for 18 seconds with a live skeleton overlay and progress. It measures posture, tilt, sway, head position and estimated breathing rate, combines them with your logged check-ins, vitals and personal baseline, and produces a structured, printable **Wellness Screening Report** (impression, findings with reference ranges, stress and tension, changes against baseline, recommendations, follow-up, limitations). Reports are saved in the browser and can be exported as JSON or CSV. It is a screening aid and does not diagnose disease.
+
+- **Live orbit (`/live`), real-time data with coordinates:** an interactive zoom-and-pan map on **NASA GIBS satellite imagery** (MODIS true colour, VIIRS night lights), with the ISS position, altitude, speed and orbit track updated every 5 seconds, a footprint circle, follow-ISS mode, saved snapshots (JSON export), open **NASA EONET** natural events plotted by latitude and longitude, the South Atlantic Anomaly radiation region (approximate) with a countdown to the next pass, and live **NOAA SWPC** radiation-storm (S), geomagnetic (G) and radio-blackout (R) scales with the Kp index.
 - **Body scan (`/scan`), real-time AI:** a neural network (**MediaPipe BlazePose**) runs in the browser on the webcam or a photo. It finds 33 body landmarks and computes joint angles, posture and symmetry scores, counts squats, and estimates fatigue from rep speed and depth. Video never leaves the device.
 - **AEGIS risk engine (Dashboard):** on-device algorithms: personal-baseline z-score anomaly detection, EWMA smoothing, least-squares trend with a 7-day projection, and a logistic fusion into a 0-100 readiness index with an explanation of what moved it.
 - **Dashboard:** story, profile, mission status, overall 0-100 score (Nominal / Watch / Review), alerts, 14-day trends, simulated live ticker.

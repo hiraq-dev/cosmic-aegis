@@ -95,3 +95,26 @@ body {
 
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+@media print {
+  body * { visibility: hidden !important; }
+  #scan-report, #scan-report * { visibility: visible !important; }
+  #scan-report { position: absolute; left: 0; top: 0; width: 100%; max-width: none; box-shadow: none; border-radius: 0; }
+  body { background: #fff !important; }
+}
+
+/* ISS marker on the live map */
+.iss-pulse { position: relative; width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 3px solid #00f0ff; box-shadow: 0 0 0 0 rgba(0,240,255,.7), 0 0 14px #00f0ff; display: flex; align-items: center; justify-content: center; animation: issPulse 2s infinite; }
+.iss-pulse span { font: 700 9px "Space Mono", monospace; color: #04101f; }
+@keyframes issPulse { 70% { box-shadow: 0 0 0 18px rgba(0,240,255,0), 0 0 14px #00f0ff; } 100% { box-shadow: 0 0 0 0 rgba(0,240,255,0), 0 0 14px #00f0ff; } }
+.leaflet-container { background: #050a18; font-family: inherit; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #0a1226; color: #e2e8f0; border: 1px solid rgba(0,240,255,.3); }
+.leaflet-popup-content a { color: #00f0ff; }
+
+/* ISS marker on the live map */
+.iss-pulse { position: relative; width: 34px; height: 34px; border-radius: 50%; background: #fff; border: 3px solid #00f0ff; box-shadow: 0 0 0 0 rgba(0,240,255,.7), 0 0 14px #00f0ff; display: flex; align-items: center; justify-content: center; animation: issPulse 2s infinite; }
+.iss-pulse span { font: 700 9px "Space Mono", monospace; color: #04101f; }
+@keyframes issPulse { 70% { box-shadow: 0 0 0 18px rgba(0,240,255,0), 0 0 14px #00f0ff; } 100% { box-shadow: 0 0 0 0 rgba(0,240,255,0), 0 0 14px #00f0ff; } }
+.leaflet-container { background: #050a18; font-family: inherit; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #0a1226; color: #e2e8f0; border: 1px solid rgba(0,240,255,.3); }
+.leaflet-popup-content a { color: #00f0ff; }

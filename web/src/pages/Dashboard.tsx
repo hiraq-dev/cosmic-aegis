@@ -7,7 +7,7 @@ import { today } from "../lib/dates";
 import Story from "../components/Story";
 import SpaceWeather from "../components/SpaceWeather";
 import RiskEngine from "../components/RiskEngine";
-import { AstronautArt } from "../components/AstronautArt";
+import ScanSession from "../components/ScanSession";
 import { AlertsList } from "../components/AlertsList";
 import { MoodCheckIn } from "../components/forms";
 import { Sparkline, TrendLines } from "../components/charts";
@@ -76,9 +76,13 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      <Story />
+
+      <ScanSession />
+
       {/* Hero */}
       <section className="glass overflow-hidden p-6 md:p-8">
-        <div className="grid items-center gap-6 md:grid-cols-[1.4fr_1fr]">
+        <div>
           <div>
             <div className="mb-3 flex items-center gap-2">
               <DemoBadge />
@@ -98,11 +102,10 @@ export default function Dashboard() {
               </span>
             </div>
           </div>
-          <AstronautArt className="mx-auto w-full max-w-sm" />
         </div>
       </section>
 
-      <Story />
+
 
       {/* Profile, mission, overall */}
       <div className="grid gap-4 lg:grid-cols-3">
