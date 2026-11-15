@@ -56,7 +56,7 @@ The site opens on the **Dashboard**, which begins with a 30-second animated, nar
 - **Mental, Muscle and bone, Cardio pages:** forms with validation, trend charts, gentle suggestions.
 - **Habitat console (`/console`):** ten modules, including the astronaut companion (4-7-8 breathing pacer, reaction test), a mock ground-control view with simulated signal delay, a delay-tolerant message queue, module checklist and hex byte viewer.
 - **SOS practice:** 10-second countdown with siren tone. Practice only; nothing is sent.
-- **AEGIS assistant:** floating chat plus voice guidance (Web Speech API). Scripted and rule-based, not an AI model. Crisis or emergency wording is redirected to real help.
+- **AEGIS assistant:** floating chat plus voice guidance (Web Speech API). With an Anthropic API key configured it runs in **AI mode**: a Claude language model answers from a short anonymous summary of the user's readings, through a serverless function (`web/api/chat.js`) that keeps the key off the browser. Without a key it falls back to a scripted, rule-based helper. Crisis wording and the spoken guidance plan always stay deterministic and redirect to real help.
 - **Profile and Sources:** optional history, NASA/CSA references, real-versus-simulated table.
 
 Screenshots are in [`web/shots/`](web/shots).
@@ -155,7 +155,8 @@ React 19, TypeScript, Vite 8, React Router 7, Tailwind CSS 4, Recharts, lucide-r
 | **Webcam pose estimation (MediaPipe BlazePose) and movement metrics** | **Real on-device AI, movement demo only** |
 | Z-score, EWMA, regression and readiness index | Real algorithms on simulated entries |
 | Astronaut, mission, history, vitals, cabin readings, bone status, ticker | Simulated demo data |
-| Computer-vision exercise analysis, ML health analysis, wearables, language-model assistant | Future integration |
+| Language-model assistant (needs `ANTHROPIC_API_KEY` on the server; scripted fallback otherwise) | Implemented, key required |
+| Wearables, clinical ML models | Future integration |
 | Clinical validation, flight-surgeon workflows | Future work with medical teams |
 
 ## NASA resources
@@ -180,6 +181,8 @@ npm run build      # type-check + production build into dist/
 npm run preview    # serve the production build
 ```
 
+AI mode needs a serverless host. Locally use `npx vercel dev` with `ANTHROPIC_API_KEY` set; the plain `npm run dev` uses the scripted assistant.
+
 Optional: set `VITE_NASA_API_KEY` to your free key from https://api.nasa.gov. Without it the site uses NASA's shared
 `DEMO_KEY`, which is rate limited (the panel then shows a labelled snapshot). The footer's **Reset demo data** button restores sample data.
 
@@ -187,11 +190,13 @@ Optional: set `VITE_NASA_API_KEY` to your free key from https://api.nasa.gov. Wi
 
 Vercel: Root Directory `web`, Framework Vite, Build `npm run build`, Output `dist`. Pushes to `main` deploy automatically.
 
+To turn on AI mode, add an environment variable `ANTHROPIC_API_KEY` (and optionally `ANTHROPIC_MODEL`, default `claude-haiku-5-5`) in Vercel Project Settings, then redeploy. The key stays on the server. The function limits input size and 30 requests per IP per hour, and sends no name or notes.
+
 ## Roadmap
 
 1. Real wearable and habitat sensor feeds in place of simulated values.
 2. Computer-vision exercise form analysis (stubs in `web/src/integrations/`).
-3. A safe language-model assistant with citations, under medical oversight.
+3. Language-model assistant with citations and a clinician-reviewed safety layer (basic AI mode is implemented).
 4. Clinical validation of thresholds with flight surgeons.
 5. Encrypted sync for crew and ground teams with proper privacy review.
 
