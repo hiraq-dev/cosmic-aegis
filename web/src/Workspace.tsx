@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { api, hasToken, setToken, stream, API } from "./lib/api";
+import { api, hasToken, setToken, stream, API, LOCAL_MODE } from "./lib/api";
 import { bleSupported, connectHeartRate, type HrConnection } from "./lib/ble";
 
 const Body3D = lazy(() => import("./components/Body3D"));
@@ -182,7 +182,7 @@ export default function Workspace() {
     <div className="min-h-screen bg-[#070d1f] text-slate-100">
       <Header right={
         <div className="flex items-center gap-3 text-xs">
-          <span aria-live="polite" className={live ? "text-cyan-300" : "text-amber-300"}>{live ? "Server stream connected" : "Server stream not connected"}</span>
+          <span aria-live="polite" className={live ? "text-cyan-300" : "text-amber-300"}>{LOCAL_MODE ? "Browser-only mode · data stored in this browser" : live ? "Server stream connected" : "Server stream not connected"}</span>
           {pending.length > 0 && <span className="text-amber-300">{pending.length} queued, pending send</span>}
           <button className="underline" onClick={() => { setToken(""); try { localStorage.removeItem("aegis-anon"); } catch { /* ignore */ } setAuthed(false); }} title="Forget this browser's workspace">Reset workspace</button>
         </div>} />
@@ -268,7 +268,7 @@ export default function Workspace() {
           <FamilyCard />
         </section>
       </main>
-      <footer className="p-4 text-center text-xs text-slate-500">AEGIS is a prototype built for the NASA Space Apps Challenge. Not medical software, not certified, not endorsed by NASA. Parts of this project were built with AI assistance. API: {API || "same origin"}</footer>
+      <footer className="p-4 text-center text-xs text-slate-500">AEGIS is a prototype built for the NASA Space Apps Challenge. Not medical software, not certified, not endorsed by NASA. Parts of this project were built with AI assistance. Mode: {LOCAL_MODE ? "browser-only (no backend; NASA/NOAA data fetched directly by your browser)" : API}</footer>
     </div>
   );
 }

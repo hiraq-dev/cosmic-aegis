@@ -1,9 +1,12 @@
+import { localApi } from "./local";
 export const API = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") || "";
 let token = "";
 try { token = sessionStorage.getItem("aegis-token") || ""; } catch { /* storage unavailable */ }
 export const setToken = (t: string) => { token = t; try { t ? sessionStorage.setItem("aegis-token", t) : sessionStorage.removeItem("aegis-token"); } catch { /* ignore */ } };
 export const hasToken = () => !!token;
+export const LOCAL_MODE = !API;
 export async function api<T = any>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
+  if (LOCAL_MODE) return localApi(path, init as any) as Promise<T>;
   const r = await fetch(API + path, {
     ...init, headers: { ...(init.json !== undefined ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(init.headers || {}) },
     body: init.json !== undefined ? JSON.stringify(init.json) : init.body,
@@ -13,6 +16,7 @@ export async function api<T = any>(path: string, init: RequestInit & { json?: un
 }
 /** Fetch-based SSE so the bearer header can be sent. */
 export function stream(onEvent: (e: any) => void, signal: AbortSignal) {
+  if (LOCAL_MODE) return; // no server stream in browser-only mode
   (async () => {
     try {
       const r = await fetch(API + "/stream", { headers: { Authorization: `Bearer ${token}` }, signal });
