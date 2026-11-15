@@ -59,3 +59,6 @@ body {
 .recharts-text {
   fill: #9fb0d6;
 }
+
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}

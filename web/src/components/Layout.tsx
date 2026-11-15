@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, BookOpen, Brain, Dumbbell, HeartPulse, LayoutDashboard, Menu, RotateCcw, User, X } from "lucide-react";
+import { Activity, BookOpen, Brain, Dumbbell, HeartPulse, LayoutDashboard, Menu, Radio, RotateCcw, Smile, User, X } from "lucide-react";
 import { Logo, btnGhost } from "./ui";
+import Assistant from "./Assistant";
 import { useStore } from "../lib/store";
 import { REPO_URL, TEAM_MEMBERS, TEAM_NAME } from "../lib/team";
 
@@ -10,7 +11,9 @@ const NAV = [
   { to: "/mental", label: "Mental health", icon: Brain },
   { to: "/musculoskeletal", label: "Muscle & bone", icon: Dumbbell },
   { to: "/cardiovascular", label: "Cardiovascular", icon: HeartPulse },
-  { to: "/profile", label: "Profile & history", icon: User },
+  { to: "/companion", label: "Companion", icon: Smile },
+  { to: "/comms", label: "Comms & SOS", icon: Radio },
+  { to: "/profile", label: "Profile", icon: User },
   { to: "/sources", label: "Sources & status", icon: BookOpen },
 ];
 
@@ -83,6 +86,7 @@ export default function Layout() {
           </button>
         </div>
       </footer>
+      <Assistant />
     </div>
   );
 }
