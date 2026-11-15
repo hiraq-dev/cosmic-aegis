@@ -1,0 +1,12 @@
+AEGIS storytelling deck
+Seven slides. Fictional astronaut Noor is a narrative device, not testimony.
+
+Slide 1 image: https://www.nasa.gov/image-article/astronaut-samantha-cristoforetti-looks-earth-through-cupola/
+Slides 2-3 context: https://www.nasa.gov/hrp/hazards/ and https://www.spaceappschallenge.org/2026/challenges/health-monitoring-software/
+Slide 4: user-requested feature roadmap. Family history context: https://medlineplus.gov/genetics/understanding/inheritance/familyhistory/
+Slide 5: local dashboard screenshot and API checks, 15 November 2026. All three backend health endpoints responded; reference index returned 527 passages, and a sample query returned cited NASA report excerpts. Pose inference did not run because yolo_pose.onnx is missing. Cognitive triage uses mock output. Existing retrieval wording incorrectly describes research passages as ordered protocols; treat these as research references only.
+Slide 6: proposed interoperable, consent-based framework; no actual cross-agency integration.
+Slide 7 image: https://www.nasa.gov/image-article/an-astronauts-view-from-station/
+NASA reports: https://ntrs.nasa.gov/citations/20170004604 and https://ntrs.nasa.gov/citations/20150016006
+AI disclosure: ChatGPT assisted writing, layout, and build code. Photos are NASA source photographs, not AI-generated images. No generated NASA logos.
+Local app: http://localhost:8081
