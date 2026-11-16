@@ -93,7 +93,6 @@ export default function Layout() {
             <a className="underline hover:text-aegis-cyan" href={REPO_URL} target="_blank" rel="noreferrer">
               Source on GitHub
             </a>
-            <span className="mt-1 block text-[10px] text-slate-500">Prototype screening tool, not a medical device. Built with AI assistance. Not endorsed by NASA.</span>
           </p>
           <button
             className={btnGhost}

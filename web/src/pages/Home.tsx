@@ -25,6 +25,7 @@ export default function Home() {
       <Panel title="Daily check-in" icon={<Brain size={16} aria-hidden="true" />}><MoodCheckIn compact /></Panel>
       <NasaContext />
       <Panel title="Sources">
+        <details className="mb-3 text-xs text-slate-300"><summary className="cursor-pointer font-semibold text-slate-200">About this project</summary><p className="mt-1">Prototype screening tool, not a medical device. Built with AI assistance. Not endorsed by NASA. In a real emergency contact your crew medical officer or local emergency services.</p></details>
         <ul className="grid gap-1 text-xs text-slate-300 sm:grid-cols-2">{SOURCES.map(s => <li key={s.name}><a className="underline hover:text-cyan-300" href={s.url} target="_blank" rel="noreferrer">{s.name}</a></li>)}</ul>
       </Panel>
     </div>
