@@ -58,8 +58,7 @@ export function Disclaimer({ className = "" }: { className?: string }) {
     <p role="note" className={`flex gap-2 rounded-lg border border-white/10 bg-white/5 p-3 text-xs leading-relaxed text-slate-300 ${className}`}>
       <Info size={16} className="mt-0.5 shrink-0 text-aegis-cyan" aria-hidden="true" />
       <span>
-        <strong>Prototype for demonstration only.</strong> C.O.S.M.I.C. AEGIS is not a medical device. It does not diagnose, predict or prevent any condition. All values are
-        sample data, and thresholds are illustrative. In a real situation follow your mission medical procedures and contact a flight surgeon.
+        <strong>Prototype for demonstration only.</strong> C.O.S.M.I.C. AEGIS is not a medical device. It does not diagnose, predict or prevent any condition, and it is not affiliated with or endorsed by NASA. NASA and NOAA panels show real data with their age; sensor and scan data stay in your browser; the check-in log starts with sample entries. Code and visuals were created with AI assistance. In a real situation follow your mission medical procedures and contact a flight surgeon.
       </span>
     </p>
   );

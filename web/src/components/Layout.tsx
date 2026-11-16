@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { Activity, RotateCcw, TriangleAlert } from "lucide-react";
+import { RotateCcw, TriangleAlert } from "lucide-react";
 import { Logo, btnGhost } from "./ui";
 import Starfield from "./Starfield";
 import AstraRobot from "./AstraRobot";
@@ -28,7 +28,7 @@ function useTilt() {
 }
 import { useStore } from "../lib/store";
 import { missionStatus } from "../lib/assess";
-import { REPO_URL, TEAM_MEMBERS, TEAM_NAME } from "../lib/team";
+import { REPO_URL, TEAM_NAME } from "../lib/team";
 
 
 function useTick(ms: number) {
@@ -89,8 +89,7 @@ export default function Layout() {
       <footer className="relative z-10 mx-auto max-w-[1720px] px-4 pb-24 pt-4 text-xs text-slate-400">
         <div className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-3xl">
-            <Activity size={12} className="mr-1 inline" aria-hidden="true" />
-            {TEAM_NAME} ({TEAM_MEMBERS}) - NASA Space Apps Challenge 2026 prototype. Demo data only, not a medical device. Not affiliated with or endorsed by NASA. Code and visuals created with AI assistance.{" "}
+            Team AEGIS (Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar Mani Kandan) - NASA Space Apps Challenge 2026.{" "}
             <a className="underline hover:text-aegis-cyan" href={REPO_URL} target="_blank" rel="noreferrer">
               Source on GitHub
             </a>
