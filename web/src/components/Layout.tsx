@@ -61,7 +61,7 @@ export default function Layout() {
           <a href="#top" className="flex items-center gap-3" aria-label="C.O.S.M.I.C. AEGIS home">
             <Logo size={44} />
             <span className="leading-tight">
-              <span className="hud-mono hidden text-[10px] tracking-[0.2em] text-slate-400 sm:block">{TEAM_NAME.toUpperCase()} &bull; DEMO PROTOTYPE</span>
+              <span className="hud-mono hidden text-[10px] tracking-[0.2em] text-slate-400 sm:block">{TEAM_NAME.toUpperCase()}</span>
               <span className="font-display text-base font-extrabold tracking-wider text-white sm:text-lg">
                 C.O.S.M.I.C. <span className="hud-glow">AEGIS</span>
               </span>
