@@ -7,7 +7,6 @@ Built by **Team AEGIS** (Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar
 
 **Live site:** https://cosmic-aegis-beryl.vercel.app
 
-
 ---
 
 ## The idea
