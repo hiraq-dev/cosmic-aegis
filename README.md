@@ -7,9 +7,6 @@ Built by **Team AEGIS** (Hira Qaiser, Srikant Kavitha Parasuraman, Kishore Kumar
 
 **Live site:** https://cosmic-aegis-beryl.vercel.app
 
-> **Prototype for demonstration only. Not a medical device.** It does not diagnose, predict or prevent any condition.
-> Health entries are sample data and every threshold is illustrative. Not affiliated with or endorsed by NASA or the
-> Canadian Space Agency. Code, text and artwork were created with AI assistance.
 
 ---
 
