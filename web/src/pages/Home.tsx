@@ -4,6 +4,7 @@ import { Brain, Play } from "lucide-react";
 import ScanSession from "../components/ScanSession";
 import CrewConsole from "../components/CrewConsole";
 import NasaContext from "../components/NasaContext";
+import FitnessPanel from "../components/FitnessPanel";
 import { MoodCheckIn } from "../components/forms";
 import { Panel } from "../components/ui";
 import { SOURCES } from "../lib/team";
@@ -22,6 +23,7 @@ export default function Home() {
       <div className="flex justify-end">{webgl && <button className="inline-flex items-center gap-1 rounded border border-white/15 px-3 py-1 text-xs text-slate-200 hover:bg-white/10" onClick={() => setIntro(true)}><Play size={12} /> Replay 3D intro</button>}</div>
       <ScanSession />
       <CrewConsole />
+      <FitnessPanel />
       <Panel title="Daily check-in" icon={<Brain size={16} aria-hidden="true" />}><MoodCheckIn compact /></Panel>
       <NasaContext />
       <Panel title="Sources">

@@ -5,6 +5,7 @@ import { astra, type AstraCtx, type AstraReply } from "../lib/astra";
 import { listReports } from "../lib/history";
 import { overall } from "../lib/assess";
 import { useStore } from "../lib/store";
+import { listFit, weekly } from "../lib/fitness";
 
 type Turn = { me?: string; a?: AstraReply };
 // One shared conversation, so the robot's pop-up and the page panel show the same chat.
@@ -31,6 +32,8 @@ function useCtx(): () => AstraCtx {
       hr: { n: v.length, latest: live.card.value ?? null, ageS: live.card.age_s ?? null, min: v.length ? Math.min(...v) : null, max: v.length ? Math.max(...v) : null, mean: v.length ? v.reduce((a, b) => a + b, 0) / v.length : null, state: STATE[live.card.state] || "no sensor" },
       scan: rep ? { when: rep.when.toLocaleString(), impression: rep.impression, flagged: rep.flagged, postureScore: rep.postureScore, quality: rep.quality, recommendations: rep.recommendations } : null,
       kp: live.kp, kpLive: live.kpLive, sleepH: o.mental.avgSleep, mood: o.mental.score,
+      fit: weekly(listFit()),
+      face: rep?.face ? `mostly ${rep.face.dominant}${rep.face.blinkPerMin !== null ? `, about ${rep.face.blinkPerMin.toFixed(0)} blinks/min` : ""}, eyes closed ${Math.round(rep.face.eyesClosedShare * 100)}% of frames, brow furrowed ${Math.round(rep.face.furrowShare * 100)}%.` : null,
     };
   };
 }
@@ -54,7 +57,7 @@ export default function AstraChat({ maxH = "max-h-72" }: { maxH?: string }) {
           </div>
         ))}
       </div>
-      <div className="mb-2 flex flex-wrap gap-1">{["How is my heart rate?", "I feel stressed", "I am tired", "Review my posture scan", "Space weather today"].map(c => <button key={c} className="rounded-full border border-white/15 px-2 py-0.5 text-xs text-slate-200 hover:bg-white/10" onClick={() => ask(c)}>{c}</button>)}</div>
+      <div className="mb-2 flex flex-wrap gap-1">{["How is my heart rate?", "I feel stressed", "I am tired", "Review my posture scan", "How is my fitness?", "Space weather today"].map(c => <button key={c} className="rounded-full border border-white/15 px-2 py-0.5 text-xs text-slate-200 hover:bg-white/10" onClick={() => ask(c)}>{c}</button>)}</div>
       <form onSubmit={e => { e.preventDefault(); ask(q); }} className="flex gap-2">
         <input aria-label="Ask ASTRA" className="flex-1 rounded bg-slate-800 p-2 text-sm text-white" value={q} onChange={e => setQ(e.target.value)} placeholder="Describe what you feel or ask about your data" />
         <button className="rounded bg-cyan-500 px-3 text-slate-950" aria-label="Send"><Send size={16} /></button>

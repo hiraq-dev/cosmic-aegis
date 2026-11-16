@@ -5,6 +5,7 @@ import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import type { AppData } from "./types";
 import { STATUS_LABEL, assessVital, buildAlerts, overall } from "./assess";
 import { buildSeries, readiness } from "./analytics";
+import type { FaceSummary } from "./face";
 
 export type Level = "ok" | "watch" | "review" | "na";
 
@@ -101,11 +102,16 @@ export interface Report {
   recommendations: string[];
   followUp: string[];
   tension: { level: Level; text: string };
+  face?: FaceSummary | null;
+  faceFindings?: Finding[];
+  details?: { label: string; unit: string; mean: number; min: number; max: number; sd: number }[];
+  comparison?: { label: string; prev: string; now: string; change: string }[];
+  quality_notes?: string[];
 }
 
 const lv = (v: number, ok: number, watch: number): Level => (v < ok ? "ok" : v < watch ? "watch" : "review");
 
-export function buildReport(samples: Sample[], data: AppData, seconds: number): Report {
+export function buildReport(samples: Sample[], data: AppData, seconds: number, face: FaceSummary | null = null, prev?: Report): Report {
   const m = (f: (s: Sample) => number) => median(samples.map(f));
   const lean = m((s) => s.lean), sT = m((s) => s.shoulderTilt), hT = m((s) => s.hipTilt), hd = m((s) => s.headTilt);
   const shift = m((s) => s.headShift), neck = m((s) => s.neckRatio);
@@ -154,6 +160,37 @@ export function buildReport(samples: Sample[], data: AppData, seconds: number): 
     : tensionMarks >= 3 ? { level: "watch", text: "Your posture shows several tension markers even though reported stress is not high. A stretch break may help." }
     : { level: "ok", text: "No strong tension pattern in your posture, and reported stress is manageable." };
 
+
+  // ---- facial expression cues (visible muscle movement only; not emotion or illness) -----------------------------------
+  const faceFindings: Finding[] = [];
+  if (face) {
+    const pc = (v: number) => `${Math.round(v * 100)}%`;
+    faceFindings.push(
+      { label: "Dominant facial expression", value: face.dominant, reference: "descriptive only", level: "na", note: `Share of frames: ${(Object.entries(face.share) as [string, number][]).filter(([, v]) => v > 0.02).map(([k, v]) => `${k} ${pc(v)}`).join(", ")}` },
+      { label: "Smile activity (mean / peak)", value: `${face.smileMean.toFixed(2)} / ${face.smilePeak.toFixed(2)}`, reference: "descriptive (0 to 1)", level: "na" },
+      { label: "Brow furrow (mean, share of frames)", value: `${face.furrowMean.toFixed(2)}, ${pc(face.furrowShare)}`, reference: "under 20% of frames", level: face.furrowShare < 0.2 ? "ok" : face.furrowShare < 0.45 ? "watch" : "review", note: "Sustained furrowing can accompany concentration, tension or discomfort. The camera cannot tell which." },
+      { label: "Blink rate", value: face.blinkPerMin === null ? "not measured" : `${face.blinkPerMin.toFixed(0)} per min`, reference: "about 8 to 30 per min", level: face.blinkPerMin === null ? "na" : face.blinkPerMin >= 8 && face.blinkPerMin <= 30 ? "ok" : "watch", note: "Needs about 8 s of clear face view. Screens, dry air and concentration change blink rate." },
+      { label: "Eyes closed (share of frames)", value: pc(face.eyesClosedShare), reference: "under 15%", level: face.eyesClosedShare < 0.15 ? "ok" : face.eyesClosedShare < 0.3 ? "watch" : "review", note: "A drowsiness cue (similar in spirit to PERCLOS). Not a fatigue diagnosis." },
+      { label: "Face visible in", value: pc(face.coverage), reference: "70% or more", level: face.coverage >= 0.7 ? "ok" : face.coverage >= 0.4 ? "watch" : "review", note: "Low coverage makes the expression results unreliable." },
+    );
+  }
+
+  // ---- detailed per-measure statistics ---------------------------------------------------------------------------------
+  const stat = (label: string, unit: string, f: (s: Sample) => number) => {
+    const v = samples.map(f);
+    return { label, unit, mean: v.reduce((a, b) => a + b, 0) / Math.max(1, v.length), min: Math.min(...v), max: Math.max(...v), sd: std(v) };
+  };
+  const details = samples.length > 1 ? [stat("Torso lean", "deg", (x) => x.lean), stat("Shoulder tilt", "deg", (x) => x.shoulderTilt), stat("Hip tilt", "deg", (x) => x.hipTilt), stat("Head tilt", "deg", (x) => x.headTilt), stat("Head shift", "shoulder widths", (x) => x.headShift), stat("Neck ratio", "ratio", (x) => x.neckRatio)] : undefined;
+  const quality_notes: string[] = [];
+  if (quality < 70) quality_notes.push(`Body landmarks were visible only ${quality}% of the time. Results are less reliable; stand fully in frame with good light.`);
+  if (samples.length < 40 && seconds > 0) quality_notes.push("Fewer than 40 usable frames were captured, so averages and the breathing estimate are weak.");
+  if (!face) quality_notes.push("No clear face view was captured, so no facial-expression cues are reported. Face the camera with your face lit.");
+  if (seconds === 0) quality_notes.push("Single photo: no movement, sway or breathing information.");
+  const comparison = prev ? [
+    { label: "Posture score", prev: `${prev.postureScore}`, now: `${postureScore}`, change: `${postureScore - prev.postureScore >= 0 ? "+" : ""}${postureScore - prev.postureScore}` },
+    { label: "Readiness index", prev: `${prev.readinessIndex}`, now: `${rd.index}`, change: `${rd.index - prev.readinessIndex >= 0 ? "+" : ""}${rd.index - prev.readinessIndex}` },
+  ] : undefined;
+
   const bad = findings.filter((f) => f.level === "review").map((f) => f.label.toLowerCase());
   const mid = findings.filter((f) => f.level === "watch").map((f) => f.label.toLowerCase());
   const parts: string[] = [];
@@ -164,6 +201,7 @@ export function buildReport(samples: Sample[], data: AppData, seconds: number): 
   );
   parts.push(`Overall logged status is ${STATUS_LABEL[o.status].toLowerCase()} with an AEGIS readiness index of ${rd.index}/100 (${rd.band}).`);
   parts.push(tension.text);
+  if (face) parts.push(`Facial cues: mostly ${face.dominant}${face.blinkPerMin !== null ? `, about ${face.blinkPerMin.toFixed(0)} blinks per minute` : ""}. These describe visible facial movement only, not mood or health.`);
   if (flagged.length) parts.push(`Compared with your own baseline, ${flagged.length} logged signal${flagged.length > 1 ? "s are" : " is"} flagged.`);
 
   const recs: string[] = [];
@@ -173,6 +211,8 @@ export function buildReport(samples: Sample[], data: AppData, seconds: number): 
   if (hT >= 3) recs.push("Stand evenly on both feet and re-scan. Persistent hip or shoulder asymmetry is worth mentioning to the crew medical officer.");
   if (o.msk.daysActive < 4) recs.push("Add a resistance or cardio session today to protect muscle and bone.");
   if (flagged.length) recs.push("Review the flagged signals on the AEGIS risk engine and discuss persistent changes with your medical officer.");
+  if (face && (face.eyesClosedShare >= 0.15 || (face.blinkPerMin !== null && face.blinkPerMin < 8 && face.eyesClosedShare >= 0.1))) recs.push("Your eyes were often closed or slow-blinking during the scan, a possible tiredness cue. Check your recent sleep and consider a short rest before demanding tasks.");
+  if (face && face.furrowShare >= 0.45) recs.push("Your brow was furrowed for much of the scan. Try a one-minute jaw and forehead relaxation, and note whether something is bothering you.");
   if (!recs.length) recs.push("Keep your daily check-in and exercise routine. Re-scan weekly to track posture over time.");
 
   const follow = [
@@ -187,6 +227,7 @@ export function buildReport(samples: Sample[], data: AppData, seconds: number): 
     seconds, frames: samples.length, quality, postureScore, findings, logged,
     readinessIndex: rd.index, readinessBand: rd.band, flagged,
     impression: parts.join(" "), recommendations: recs, followUp: follow, tension,
+    face, faceFindings, details, comparison, quality_notes,
   };
 }
 

@@ -2,7 +2,7 @@
 // It never diagnoses, never names medicines or doses, and always lists when to seek real care.
 export interface HrStats { n: number; latest: number | null; ageS: number | null; min: number | null; max: number | null; mean: number | null; state: string }
 export interface ScanSummary { when: string; impression: string; flagged: string[]; postureScore: number; quality: number; recommendations: string[] }
-export interface AstraCtx { hr: HrStats; scan: ScanSummary | null; kp: number | null; kpLive: boolean; sleepH: number | null; mood: number | null }
+export interface AstraCtx { hr: HrStats; scan: ScanSummary | null; kp: number | null; kpLive: boolean; sleepH: number | null; mood: number | null; fit?: { sessions: number; minutes: number; reps: number; whoPct: number; activeDays: number } | null; face?: string | null }
 export interface AstraReply { safety?: boolean; concern: string; findings: string[]; assessment: string; plan: string[]; seekCare: string[]; missing: string[] }
 
 export const URGENT = /suicid|kill myself|hurt myself|self.?harm|end my life|chest pain|can'?t breathe|cannot breathe|faint|unconscious|overdose|stroke|seizure|severe bleeding/i;
@@ -17,7 +17,19 @@ export function astra(q: string, c: AstraCtx): AstraReply {
   const scanLine = c.scan ? `Latest body scan (${c.scan.when}): posture score ${c.scan.postureScore}/100, capture quality ${c.scan.quality}/100. ${c.scan.flagged.length ? "Flagged: " + c.scan.flagged.join(", ") + "." : "Nothing flagged."}` : null;
   const has = (...w: string[]) => w.some(x => t.includes(x));
 
-  if (has("heart", "pulse", "bpm", "palpit", "hr ")) {
+  if (has("fitness", "exercise", "workout", "squat", "reps", "training", "active", "gym")) {
+    concern = "Fitness and exercise";
+    if (c.fit && c.fit.sessions) findings.push(`Last 7 days: ${c.fit.sessions} camera-counted set(s), ${c.fit.reps} reps, ${c.fit.minutes.toFixed(1)} active minutes on ${c.fit.activeDays} day(s) (${c.fit.whoPct}% of the 150-minute weekly guideline, camera sets only).`); else missing.push("No counted exercise sets yet. Use the camera counter in the crew panel.");
+    if (hrLine) findings.push(hrLine);
+    assessment = c.fit && c.fit.whoPct >= 100 ? "You have reached the weekly activity guideline from counted sets. Keep variety: strength and cardio both matter." : "Adults are advised to get about 150 minutes of moderate activity a week plus strength work twice a week. Counted camera sets only cover part of what you do.";
+    plan.push("Add short daily sets (squats, arm raises, jumping jacks) and save each one.", "Warm up first and stop if you feel pain, dizziness or chest tightness.");
+    missing.push("Resistance-load data (the camera counts reps, not weight)");
+  } else if (has("face", "expression", "smile", "blink", "look tired", "eyes")) {
+    concern = "Facial expression cues";
+    findings.push(c.face ? `Latest scan: ${c.face}` : "No facial-expression data yet. Run the body scan with your face visible.");
+    assessment = "Expression cues measure visible facial muscle movement (smile, brow furrow, blinking, eye closure). They cannot tell your emotion, pain or health, and they depend on light and camera angle.";
+    plan.push("Re-scan in good, even light facing the camera, at the same time of day, to compare.");
+  } else if (has("heart", "pulse", "bpm", "palpit", "hr ")) {
     concern = "Heart rate";
     if (hrLine) findings.push(hrLine); else missing.push("No heart-rate sensor readings yet. Pair a sensor above.");
     if (c.hr.latest != null && c.hr.state !== "receiving") findings.push("The sensor is not currently sending, so the last value may be out of date.");

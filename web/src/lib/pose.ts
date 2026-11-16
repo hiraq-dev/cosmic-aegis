@@ -65,3 +65,41 @@ export const BONES: [number, number, string][] = [
 const R: Record<number, Pt3> = { 0: [0, 0.85, 0], 11: [-0.28, 0.55, 0], 12: [0.28, 0.55, 0], 13: [-0.4, 0.2, 0], 14: [0.4, 0.2, 0], 15: [-0.45, -0.15, 0], 16: [0.45, -0.15, 0], 23: [-0.15, -0.15, 0], 24: [0.15, -0.15, 0], 25: [-0.17, -0.6, 0], 26: [0.17, -0.6, 0], 27: [-0.18, -0.95, 0], 28: [0.18, -0.95, 0] };
 /** Neutral reference posture shown when no camera data is flowing. */
 export const REFERENCE: (Pt3 | null)[] = Array.from({ length: 33 }, (_, i) => R[i] ?? null);
+
+// ---- exercise repetition counting ---------------------------------------------------------------------------------------
+export type Exercise = "squat" | "armraise" | "jack";
+export const EXERCISES: Record<Exercise, { label: string; hint: string }> = {
+  squat: { label: "Squats", hint: "Face or stand side-on, full legs in view. A rep counts when your knees bend below ~110° and you stand back up." },
+  armraise: { label: "Overhead arm raises", hint: "Face the camera. A rep counts when both wrists go above your shoulders and come back down." },
+  jack: { label: "Jumping jacks", hint: "Face the camera with your whole body in view. A rep counts when arms go up with feet apart, then return." },
+};
+/** Hysteresis counter on a scalar signal: goes "high" above `high`, a rep is counted when it returns below `low`. */
+export class SignalCounter {
+  reps = 0; private high = false; used = 0; skipped = 0; private peak = -Infinity; peaks: number[] = []; stamps: number[] = [];
+  constructor(public high_ = 0.25, public low_ = -0.05) {}
+  push(v: number | null, t = 0) {
+    if (v == null) { this.skipped++; return; }
+    this.used++; this.peak = Math.max(this.peak, v);
+    if (!this.high && v > this.high_) this.high = true;
+    else if (this.high && v < this.low_) { this.high = false; this.reps++; this.peaks.push(+this.peak.toFixed(2)); this.peak = -Infinity; this.stamps.push(t); }
+  }
+}
+const vis = (lm: LM[], idx: number[]) => idx.every((i) => ok(lm[i]));
+/** Wrist height above shoulder line, in torso lengths. Positive when the wrists are raised. */
+export function armSignal(lm: LM[]): number | null {
+  if (!vis(lm, [11, 12, 15, 16, 23, 24])) return null;
+  const sy = (lm[11].y + lm[12].y) / 2, hy = (lm[23].y + lm[24].y) / 2, wy = (lm[15].y + lm[16].y) / 2, torso = Math.max(1e-6, hy - sy);
+  return (sy - wy) / torso;
+}
+/** Jumping-jack signal: arms up AND feet wider than shoulders -> high; both near rest -> low. */
+export function jackSignal(lm: LM[]): number | null {
+  const a = armSignal(lm); if (a == null || !vis(lm, [27, 28])) return null;
+  const sw = Math.max(1e-6, Math.abs(lm[11].x - lm[12].x)), spread = Math.abs(lm[27].x - lm[28].x) / sw;
+  return Math.min(a, (spread - 1.2) * 1.2);
+}
+export function exerciseSignal(ex: Exercise, lm: LM[]): number | null {
+  if (ex === "armraise") return armSignal(lm);
+  if (ex === "jack") return jackSignal(lm);
+  const k = kneeAngle(lm); return k == null ? null : (170 - k) / 60;   // 170 deg standing -> 0, 110 deg -> 1
+}
+export const counterFor = (ex: Exercise) => (ex === "squat" ? new SignalCounter(0.9, 0.2) : ex === "armraise" ? new SignalCounter(0.25, -0.05) : new SignalCounter(0.2, -0.1));

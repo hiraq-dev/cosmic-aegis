@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera, CameraOff, Download, FileDown, ImageUp, RotateCcw, ShieldCheck, Trash2 } from "lucide-react";
-import { DrawingUtils, FilesetResolver, PoseLandmarker, type NormalizedLandmark } from "@mediapipe/tasks-vision";
+import { DrawingUtils, FaceLandmarker, FilesetResolver, PoseLandmarker, type NormalizedLandmark } from "@mediapipe/tasks-vision";
+import { faceSampleFrom, labelFor, summarizeFace, type FaceSample } from "../lib/face";
 import { useStore } from "../lib/store";
 import { deleteReport, download, listReports, reportsCsv, saveReport } from "../lib/history";
 import { buildReport, sampleFrom, type Level, type Report, type Sample } from "../lib/screening";
@@ -9,6 +10,7 @@ import { buildReport, sampleFrom, type Level, type Report, type Sample } from ".
 // Pose tracking runs on this device (MediaPipe BlazePose). Nothing is uploaded.
 const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm";
 const MODEL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task";
+const FACE_MODEL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
 const SCAN_SECONDS = 18;
 
 type Phase = "idle" | "loading" | "position" | "scanning" | "report" | "error";
@@ -37,6 +39,10 @@ export default function ScanSession() {
   const stream = useRef<MediaStream | null>(null);
   const raf = useRef(0);
   const samples = useRef<Sample[]>([]);
+  const faceSamples = useRef<FaceSample[]>([]);
+  const faceLmk = useRef<FaceLandmarker | null>(null);
+  const frameN = useRef(0);
+  const [expr, setExpr] = useState<string>("-");
   const t0 = useRef(0);
   const okSince = useRef(0);
   const lastLm = useRef<NormalizedLandmark[] | null>(null);
@@ -59,6 +65,10 @@ export default function ScanSession() {
       const fs = await timeout(FilesetResolver.forVisionTasks(WASM));
       const make = (delegate: "GPU" | "CPU") => PoseLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: MODEL, delegate }, runningMode: mode, numPoses: 1 });
       try { landmarkers.current[mode] = await timeout(make("GPU")); } catch { landmarkers.current[mode] = await timeout(make("CPU")); }
+      if (mode === "VIDEO" && !faceLmk.current) {
+        try { faceLmk.current = await timeout(FaceLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: FACE_MODEL, delegate: "GPU" }, runningMode: "VIDEO", numFaces: 1, outputFaceBlendshapes: true })); }
+        catch { faceLmk.current = null; /* expressions are optional: the body scan still works */ }
+      }
     }
     return landmarkers.current[mode]!;
   }, []);
@@ -126,6 +136,10 @@ export default function ScanSession() {
     const w = v.videoWidth, h = v.videoHeight;
     const lm = res.landmarks[0] ?? null;
     lastLm.current = lm;
+    let fs: FaceSample | null = null;
+    if (faceLmk.current && ++frameN.current % 2 === 0) {
+      try { const fr = faceLmk.current.detectForVideo(v, now + 0.5); const cats = fr.faceBlendshapes?.[0]?.categories; if (cats) { fs = faceSampleFrom(cats as { categoryName: string; score: number }[], 0); setExpr(labelFor(fs)); } else setExpr("no face"); } catch { /* skip frame */ }
+    }
     const ph = phaseRef.current;
     let frac: number | null = null;
 
@@ -140,6 +154,7 @@ export default function ScanSession() {
         const t = (now - t0.current) / 1000;
         frac = Math.min(1, t / SCAN_SECONDS);
         if (body) samples.current.push({ ...s, t });
+        if (fs) faceSamples.current.push({ ...fs, t });
         if (samples.current.length % 4 === 0) {
           setProgress(frac);
           const posture = Math.round(Math.max(0, Math.min(100, 100 - s.lean * 2.2 - s.shoulderTilt * 2 - s.hipTilt * 2)));
@@ -157,13 +172,14 @@ export default function ScanSession() {
   const finish = () => {
     stopCamera();
     setProgress(1);
-    showReport(buildReport(samples.current, dataRef.current, SCAN_SECONDS));
+    const prev = listReports()[0];
+    showReport(buildReport(samples.current, dataRef.current, SCAN_SECONDS, summarizeFace(faceSamples.current, Math.ceil(samples.current.length / 2), SCAN_SECONDS), prev));
     setPhase("report");
     setTimeout(() => document.getElementById("scan-report")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
   };
 
   const start = async () => {
-    setPhase("loading"); setMsg("Loading the on-device pose model (about 6 MB, first time only)..."); setReport(null); setProgress(0); okSince.current = 0;
+    setPhase("loading"); setMsg("Loading the on-device pose model (about 6 MB, first time only)..."); setReport(null); setProgress(0); okSince.current = 0; faceSamples.current = []; frameN.current = 0; setExpr("-");
     try {
       await getModel("VIDEO");
       setMsg("Requesting camera...");
@@ -273,7 +289,7 @@ export default function ScanSession() {
                 })}
               </ul>
               <div className="grid grid-cols-3 gap-2">
-                {[["POSTURE", String(live.posture)], ["LEAN", `${live.lean.toFixed(1)}°`], ["SHOULDER TILT", `${live.tilt.toFixed(1)}°`]].map(([l, v]) => (
+                {[["POSTURE", String(live.posture)], ["LEAN", `${live.lean.toFixed(1)}°`], ["SHOULDER TILT", `${live.tilt.toFixed(1)}°`], ["FACE CUE", expr]].map(([l, v]) => (
                   <div key={l} className="rounded-lg border border-white/10 bg-white/5 p-2 text-center">
                     <div className="hud-mono text-[9px] tracking-wider text-slate-400">{l}</div>
                     <div className="hud-mono text-lg font-bold tabular-nums text-aegis-cyan">{v}</div>
@@ -395,7 +411,27 @@ function ReportView({ r, data }: { r: Report; data: ReturnType<typeof useStore>[
         </section>
 
         {table("A. Camera scan findings", r.findings)}
+        {r.comparison && (
+          <section className="mt-4">
+            <h4 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Change since your previous scan</h4>
+            <table className="w-full text-left text-[13px]"><tbody>{r.comparison.map((c) => <tr key={c.label} className="border-b border-slate-200"><td className="py-1 pr-3 font-medium text-slate-900">{c.label}</td><td className="py-1 pr-3 text-slate-600">{c.prev} then</td><td className="py-1 pr-3 text-slate-900">{c.now} now</td><td className="py-1 font-semibold text-slate-900">{c.change}</td></tr>)}</tbody></table>
+          </section>
+        )}
+        {r.faceFindings && r.faceFindings.length > 0 && table("A2. Facial expression cues", r.faceFindings)}
+        {r.faceFindings && r.faceFindings.length > 0 && <p className="mt-1 text-[11px] text-slate-500">Expression cues come from face-landmark muscle-movement scores. They describe visible movement, not emotion, mood, pain or illness.</p>}
+        {r.details && (
+          <section className="mt-4">
+            <h4 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">A3. Measurement detail across the scan</h4>
+            <table className="w-full text-left text-[13px]">
+              <thead><tr className="border-b-2 border-slate-300 text-[11px] uppercase tracking-wide text-slate-500"><th className="pb-1 pr-3">Measure</th><th className="pb-1 pr-3">Mean</th><th className="pb-1 pr-3">Min</th><th className="pb-1 pr-3">Max</th><th className="pb-1">Variability (SD)</th></tr></thead>
+              <tbody>{r.details.map((d) => <tr key={d.label} className="border-b border-slate-200"><td className="py-1 pr-3 font-medium text-slate-900">{d.label} <span className="text-[11px] font-normal text-slate-500">({d.unit})</span></td><td className="py-1 pr-3 tabular-nums">{d.mean.toFixed(2)}</td><td className="py-1 pr-3 tabular-nums">{d.min.toFixed(2)}</td><td className="py-1 pr-3 tabular-nums">{d.max.toFixed(2)}</td><td className="py-1 tabular-nums">{d.sd.toFixed(2)}</td></tr>)}</tbody>
+            </table>
+          </section>
+        )}
         {table("B. Logged data (check-ins, vitals, activity)", r.logged)}
+        {r.quality_notes && r.quality_notes.length > 0 && (
+          <section className="mt-4"><h4 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">Data quality notes</h4><ul className="list-disc pl-5 text-[13px] text-slate-900">{r.quality_notes.map((q) => <li key={q}>{q}</li>)}</ul></section>
+        )}
 
         <section className="mt-4">
           <h4 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">C. Stress and tension</h4>
