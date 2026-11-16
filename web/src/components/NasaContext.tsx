@@ -91,7 +91,6 @@ export default function NasaContext() {
           return <li key={s}><b>{s}</b>: <span className={d?.live ? "text-cyan-300" : "text-amber-300"}>{d ? (d.live ? "LIVE" : d.freshness === "cached" ? "CACHED" : "UNAVAILABLE") : "loading"}</span>{d?.age_s != null && <> · retrieved {ago(d.age_s)}</>}{d?.times?.observed_at && <> · observed {d.times.observed_at}</>}{d?.error && <> · {d.error}</>}{d?.data?.provider && <> · {d.data.provider}</>}</li>;
         })}
       </ul>
-      <p className="mt-2 text-xs text-slate-500">Space-weather context does not by itself indicate any personal health effect, and none of these values is a personal radiation dose. The aurora zone is simple geometry derived from Kp, not NOAA's forecast model; the day/night line comes from the clock; the ISS position is third-party and predicted.</p>
     </section>
   );
 }
