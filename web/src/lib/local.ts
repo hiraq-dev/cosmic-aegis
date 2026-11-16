@@ -6,7 +6,7 @@ const DOMAINS: Record<string, string[]> = { cardiovascular: ["heart_rate"], ment
 const STALE: Record<string, number> = { heart_rate: 15, co2_ppm: 120, temperature_c: 120 };
 // NASA Open APIs key (free, rate-limit key, visible in the page code by design: this site has no backend). Override with VITE_NASA_API_KEY.
 const NASA_KEY = (import.meta.env.VITE_NASA_API_KEY as string | undefined) || "DR9Cq9wMndpRTRnF8dK9qLftTFdMpGKThfLzHg8h";
-const INTERVAL: Record<string, number> = { noaa_scales: 120, noaa_kp: 120, donki: 900, eonet: 1800, gibs: 3600, iss: 20 };
+const INTERVAL: Record<string, number> = { noaa_wind: 120, noaa_scales: 120, noaa_kp: 120, donki: 900, eonet: 1800, gibs: 3600, iss: 20 };
 
 interface Store { measurements: J[]; checkins: J[]; history: string; devices: Record<string, string>; consent: boolean; nasa: Record<string, J>; seq: number }
 let mem: Store = { measurements: [], checkins: [], history: "", devices: {}, consent: false, nasa: {}, seq: 0 };
@@ -53,6 +53,11 @@ const utc = (s?: string) => (s ? new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? s : s
 async function getJ(url: string, ms = 12000) { const c = new AbortController(), t = setTimeout(() => c.abort(), ms); try { const r = await fetch(url, { signal: c.signal }); if (r.status === 429) throw new Error("rate_limited"); if (!r.ok) throw new Error("http " + r.status); return r.json(); } finally { clearTimeout(t); } }
 const FETCH: Record<string, () => Promise<J>> = {
   async noaa_kp() { const d = await getJ("https://services.swpc.noaa.gov/json/planetary_k_index_1m.json"); const l = [...d].reverse().find((r: J) => r.estimated_kp != null); return { provider: "NOAA Space Weather Prediction Center", current: { kp: l ? Number(l.estimated_kp) : null }, observed_at: l ? utc(l.time_tag) : null }; },
+  async noaa_wind() {
+    const [sp, mag] = await Promise.all([getJ("https://services.swpc.noaa.gov/products/summary/solar-wind-speed.json"), getJ("https://services.swpc.noaa.gov/products/summary/solar-wind-mag-field.json")]);
+    const a = Array.isArray(sp) ? sp[0] : null, b = Array.isArray(mag) ? mag[0] : null; if (!a && !b) throw new Error("schema"); const speed = Number(a?.proton_speed), bz = Number(b?.bz_gsm), bt = Number(b?.bt);
+    return { provider: "NOAA Space Weather Prediction Center (DSCOVR / ACE at L1)", current: { speed_kms: Number.isFinite(speed) ? speed : null, bz_nT: Number.isFinite(bz) ? bz : null, bt_nT: Number.isFinite(bt) ? bt : null }, observed_at: utc(a?.time_tag ?? b?.time_tag) };
+  },
   async noaa_scales() { const d = await getJ("https://services.swpc.noaa.gov/products/noaa-scales.json"); const c = d["0"]; if (!c) throw new Error("schema"); const sc = (k: string) => { const v = c[k]?.Scale; return v === undefined || v === null || v === "" ? null : Number(v); }; return { provider: "NOAA Space Weather Prediction Center", current: { radio_blackout_R: sc("R"), solar_radiation_storm_S: sc("S"), geomagnetic_G: sc("G") }, observed_at: utc(`${c.DateStamp}T${c.TimeStamp}`) }; },
   async eonet() { const d = await getJ("https://eonet.gsfc.nasa.gov/api/v3/events?status=open&limit=150"); const ev: J[] = []; let skipped = 0; for (const e of d.events || []) { const g = (e.geometry || []).slice(-1)[0]; let p: number[] | null = null; if (g?.type === "Point") p = g.coordinates; else if (g?.type === "Polygon") { const r = g.coordinates[0]; p = [r.reduce((a: number, q: number[]) => a + q[0], 0) / r.length, r.reduce((a: number, q: number[]) => a + q[1], 0) / r.length]; } if (!p) { skipped++; continue; } ev.push({ id: e.id, title: e.title, category: e.categories?.[0]?.title, lon: p[0], lat: p[1], observed_at: g.date, sources: (e.sources || []).map((s: J) => s.url) }); } return { provider: "NASA EONET", events: ev, skipped_unsupported_geometry: skipped, observed_at: ev.map(e => e.observed_at).sort().pop() || null }; },
   async iss() { const d = await getJ("https://api.wheretheiss.at/v1/satellites/25544"); return { provider: "api.wheretheiss.at (third party, not NASA)", kind: "propagated_orbit_position", lat: d.latitude, lon: d.longitude, observed_at: new Date(d.timestamp * 1000).toISOString() }; },
