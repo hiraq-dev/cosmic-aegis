@@ -5,7 +5,7 @@ import ScanSession from "../components/ScanSession";
 import CrewConsole from "../components/CrewConsole";
 import NasaContext from "../components/NasaContext";
 import { MoodCheckIn } from "../components/forms";
-import { Disclaimer, Panel } from "../components/ui";
+import { Panel } from "../components/ui";
 import { SOURCES } from "../lib/team";
 
 const Intro3D = lazy(() => import("../components/Intro3D"));
@@ -27,7 +27,6 @@ export default function Home() {
       <Panel title="Sources">
         <ul className="grid gap-1 text-xs text-slate-300 sm:grid-cols-2">{SOURCES.map(s => <li key={s.name}><a className="underline hover:text-cyan-300" href={s.url} target="_blank" rel="noreferrer">{s.name}</a></li>)}</ul>
       </Panel>
-      <Disclaimer />
     </div>
   );
 }
