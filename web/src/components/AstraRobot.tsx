@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { X } from "lucide-react";
+const AstraChat = lazy(() => import("./AstraChat"));
 
 /** Floating anime-style robot. It glides down the page as you scroll, tilts toward the scroll direction,
  *  blinks, and jumps to the ASTRA consultation panel when clicked. Motion is skipped for reduced-motion users. */
 export default function AstraRobot() {
-  const [y, setY] = useState(0), [tilt, setTilt] = useState(0), [wave, setWave] = useState(false);
+  const [open, setOpen] = useState(false), [y, setY] = useState(0), [tilt, setTilt] = useState(0), [wave, setWave] = useState(false);
   const last = useRef(0), reduce = useRef(false);
   useEffect(() => {
     reduce.current = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
@@ -19,8 +21,15 @@ export default function AstraRobot() {
     return () => { window.removeEventListener("scroll", onScroll); clearTimeout(t); };
   }, []);
   return (
-    <button aria-label="Open ASTRA, the health assistant" title="ASTRA — click to talk"
-      onClick={() => document.getElementById("astra")?.scrollIntoView({ behavior: reduce.current ? "auto" : "smooth", block: "center" })}
+    <>
+    {open && (
+      <div role="dialog" aria-label="ASTRA chat" className="fixed bottom-4 right-4 z-50 w-[min(92vw,26rem)] rounded-2xl border border-cyan-400/40 bg-[rgba(6,11,24,0.96)] p-4 shadow-[0_10px_40px_rgba(0,0,0,.7)] backdrop-blur">
+        <div className="mb-2 flex items-center justify-between"><h2 className="font-display text-sm font-bold text-white">ASTRA · health assistant</h2><button aria-label="Close chat" className="rounded p-1 text-slate-300 hover:bg-white/10" onClick={() => setOpen(false)}><X size={16} /></button></div>
+        <Suspense fallback={<p className="text-sm text-slate-400">Loading…</p>}><AstraChat maxH="max-h-[45vh]" /></Suspense>
+      </div>
+    )}
+    <button aria-label="Open ASTRA, the health assistant" title="ASTRA: click to chat"
+      onClick={() => setOpen(o => !o)} aria-expanded={open}
       className="fixed right-3 z-40 select-none rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
       style={{ top: 90, transform: `translateY(${y}px) rotate(${tilt}deg)`, transition: reduce.current ? "none" : "transform .7s cubic-bezier(.2,.8,.2,1)" }}>
       <svg width="86" height="104" viewBox="0 0 86 104" aria-hidden="true">
@@ -43,5 +52,6 @@ export default function AstraRobot() {
       </svg>
       <span className="absolute -left-14 top-2 rounded-full bg-cyan-500 px-2 py-0.5 text-[10px] font-bold text-slate-950 shadow">ASTRA</span>
     </button>
+    </>
   );
 }
