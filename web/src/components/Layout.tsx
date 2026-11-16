@@ -27,8 +27,7 @@ function useTilt() {
   }, []);
 }
 import { useStore } from "../lib/store";
-import { missionStatus, simulatedEnvironment } from "../lib/assess";
-import { today } from "../lib/dates";
+import { missionStatus } from "../lib/assess";
 import { REPO_URL, TEAM_MEMBERS, TEAM_NAME } from "../lib/team";
 
 
@@ -44,36 +43,6 @@ function useTick(ms: number) {
 function Clock() {
   useTick(1000);
   return <span className="hud-mono">{new Date().toISOString().slice(11, 19)} UTC</span>;
-}
-
-// Simulated "live" strip: base values come from the demo model and wobble every 2 s. Nothing is measured.
-function Ticker() {
-  const tick = useTick(2000);
-  const { data } = useStore();
-  const env = simulatedEnvironment(today());
-  const j = (k: number, amp: number) => Math.sin(tick * 0.9 + k) * amp;
-  const latest = [...data.vitals].sort((a, b) => a.date.localeCompare(b.date)).pop();
-  const items = [
-    { l: "HEART RATE", v: `${Math.round((latest?.heartRate ?? 72) + j(1, 2.5))}`, u: "bpm", c: "#ff6b8b" },
-    { l: "OXYGEN", v: `${Math.min(100, Math.round((latest?.spo2 ?? 98) + j(2, 0.6)))}`, u: "%", c: "#00f0ff" },
-    { l: "CABIN CO2", v: `${Math.round(env.co2Ppm + j(3, 40))}`, u: "ppm", c: "#ffb020" },
-    { l: "CABIN TEMP", v: (env.tempC + j(4, 0.15)).toFixed(1), u: "C", c: "#38bdf8" },
-    { l: "RADIATION", v: (env.radiationMsvDay + j(5, 0.01)).toFixed(2), u: "mSv/day", c: "#a78bfa" },
-  ];
-  return (
-    <div className="border-b border-white/5 bg-[rgba(4,8,20,.85)]" role="status" aria-label="Simulated live readings">
-      <div className="mx-auto flex max-w-[1720px] items-center gap-x-6 gap-y-1 overflow-x-auto px-4 py-1.5 text-xs">
-        <span className="hud-mono flex shrink-0 items-center gap-1.5 text-[10px] font-bold tracking-widest text-hud-emerald"><span className="pulse-dot" /> SIMULATED LIVE</span>
-        {items.map((i) => (
-          <span key={i.l} className="hud-mono flex shrink-0 items-baseline gap-1.5">
-            <span className="text-[9.5px] text-slate-500">{i.l}</span>
-            <strong className="text-[13px] tabular-nums" style={{ color: i.c, textShadow: `0 0 8px ${i.c}66` }}>{i.v}</strong>
-            <span className="text-[9px] text-slate-500">{i.u}</span>
-          </span>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export default function Layout() {
@@ -111,7 +80,6 @@ export default function Layout() {
           </div>
         </div>
       </header>
-      <Ticker />
 
       <main id="main" className="relative z-10 mx-auto max-w-[1720px] px-4 py-6">
         <Outlet />
